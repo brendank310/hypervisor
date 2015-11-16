@@ -7,19 +7,20 @@
 int main(int argc, char **argv)
 {
 	portio_linux io;
-	serial_port *com = new serial_port_x86(io);
+	serial_port_x86 tmp(io);
+	serial_port *com = &tmp;
 
 	com->open();
 
 	setbuf(stdout, NULL);
 
-	while(1)
+	do
 	{
 		if(com->data_ready())
 		{
-			com->write(com->read());
+			*com << com->read();
 		}
-	}
+	} while(1);
 
 	return 0;
 }

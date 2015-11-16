@@ -1,5 +1,7 @@
 #include <portio_linux.h>
+#include <bf_portio.h>
 #include <sys/io.h>
+
 
 portio_linux::portio_linux()
 {
@@ -16,20 +18,23 @@ portio_linux::~portio_linux()
 
 void portio_linux::port_write_8(uint16_t port, uint8_t value)
 {
-	outb(value, port);
+	TRACE_INT(port);
+	TRACE_INT(value);
+	bf_outb(value, port);
 }
 
 void portio_linux::port_write_16(uint16_t port, uint16_t value)
 {
-	outw(value, port);
+	bf_outw(value, port);
 }
 
 uint8_t portio_linux::port_read_8(uint16_t port)
 {
-	return inb(port);
+	uint8_t val = bf_inb(port);
+	return val;
 }
 
 uint16_t portio_linux::port_read_16(uint16_t port)
 {
-	return inw(port);
+	return bf_inw(port);
 }

@@ -41,8 +41,8 @@ RM=rm -rf
 MD=mkdir -p
 
 CCFLAGS=
-CXXFLAGS=
-LDFLAGS=
+CXXFLAGS=-c
+LDFLAGS=-fPIC -shared
 ASMFLAGS=-f elf64
 
 DEFINES=
@@ -58,7 +58,7 @@ TARGET_CROSS_COMPILED=false
 OBJDIR=.build
 OUTDIR=../bin
 
-SOURCES=serial_port_x86.cpp portio_linux.cpp
+SOURCES=serial_port_x86.cpp portio_linux.cpp bf_portio.asm
 
 INCLUDES=
 LIBS=

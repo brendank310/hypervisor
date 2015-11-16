@@ -191,7 +191,7 @@ public:
     bool transmitter_empty(void);
     bool error_byte_rx_fifo(void);
 
-    serial_port &operator<<(uint8_t value) { m_port_io.port_write_8(m_port, value); return *this; }
+    serial_port &operator<<(uint8_t value) { write(value); return *this; }
 
 private:
     // Get appropriate divisor for desired baud

@@ -1,18 +1,30 @@
+section .text
+
 global bf_outb
 global bf_inb
 global bf_outw
 global bf_inw
 
-section .text
 
 bf_outb:
-	mov ax, di
-	mov dx, si
+	push rcx
+	push rbx
+	mov rcx, 0
+	mov rbx, 0
+	mov eax, esi
+	mov edx, edi
+	movzx rcx, dl
+	movzx rbx, ax
+	mov edx, ecx
+	mov eax, ebx
+	int 3
 	out dx, al
+	pop rbx
+	pop rcx
 	ret
 
 bf_inb:
-	mov ax, 0
+	mov al, 0
 	mov dx, di
 	in al, dx
 	ret

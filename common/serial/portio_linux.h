@@ -4,11 +4,6 @@
 #include <port_io.h>
 #include <stdio.h>
 
-extern void bf_outb(uint16_t port, uint8_t value);
-extern void bf_outw(uint16_t port, uint16_t value);
-extern uint8_t bf_inb(uint16_t port);
-extern uint16_t bf_inw(uint16_t port);
-
 #define TRACE() printf("%s:%d\n", __PRETTY_FUNCTION__, __LINE__)
 #define TRACE_INT(x) printf("[%s:%d] - %08X\n", __PRETTY_FUNCTION__, __LINE__, x)
 
