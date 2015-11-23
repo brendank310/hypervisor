@@ -1,27 +1,30 @@
-# OS X Cross Compiler
+# Linux Cross Compiler (GCC)
 
 ## Summary
 
-The following describes how to create a cross-compiler for the Bareflank hypervisor.  
+The following describes how to create a cross-compiler for the Bareflank hypervisor on Linux. A script to automate this is provided in the repository.
 
-## Homebrew
+## Apt
 
-Prior to being able to create the cross-compiler, you will need to install Homebrew. Homebrew provides access to some prerequisites needed to compile GCC and binutils. Note that some instructions online demonstrate how to compile these prerequisites manually, a process that should be avoided as this cross-compiler will be executing on the host, and thus should be as compatible with the host as possible. 
+This guide was designed around a bare install of Debian 8.0 (Jessie). Prerequisites for building the cross compiler are satisfied using apt.
 
-[Homebrew Main Page](http://brew.sh/)
+[Apt wiki](https://wiki.debian.org/Apt)
 
-Follow the instructions on the website for installing Homebrew (it’s insanely simple). Once installed you will need to install the following:
+You will need to install the following:
 
 ```
-brew install gmp
-brew install mpfr
-brew install libmpc
-brew install isl
+apt-get install build-essential
+apt-get install libgmp-dev
+apt-get install libmpc-dev
+apt-get install libmpfr-dev
+apt-get install libisl-dev
+apt-get install flex
+apt-get install bison
 ```
 
 ## Downloads
 
-Before you can compile the cross-compiler, you must download it. For GCC, this consists of both binutils and gcc itself. Note that you must select gcc 5.2.0 or higher, and binutils 2.25.1 or higher. All that is needed in this step are the links for the compiler you choose to install, as we will complete the actual download later. 
+Before you can compile the cross-compiler, you must download GCC and binutils. Note that you must select gcc 5.2.0 or higher, and binutils 2.25.1 or higher. All that is needed in this step are the links for the compiler you choose to install, as we will complete the actual download later. 
 
 ftp://ftp.gnu.org/gnu/gcc/ <br>
 ftp://ftp.gnu.org/gnu/binutils/ <br>
@@ -77,15 +80,13 @@ To compile gcc, run the following:
 ```
 cd ~/cross/build-gcc
 
-../gcc-*/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-gmp=/usr/local/Cellar/gmp/6.0.0a/ --with-mpfr=/usr/local/Cellar/mpfr/3.1.3/ --with-mpc=/usr/local/Cellar/libmpc/1.0.3/ --with-isl=/usr/local/Cellar/isl/0.14.1/
+../gcc-*/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
 
 make all-gcc
 make all-target-libgcc
 make install-gcc
 make install-target-libgcc
 ```
-
-Note that the paths for gmp, mpfr, mpc and isl are hardcoded for OS X El Capitan and might be different depending on which version of OS X and Homebrew that you are using. 
 
 ## Compile NASM
 
