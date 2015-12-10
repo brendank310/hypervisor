@@ -50,6 +50,12 @@ void __write_cr0(uint64_t val);
 uint64_t __read_cr4();
 void __write_cr4(uint64_t val);
 
+void __outb(uint16_t val, uint16_t port);
+void __outw(uint16_t val, uint16_t port);
+
+uint8_t __inb(uint16_t port);
+uint16_t __inw(uint16_t port);
+
 #ifdef __cplusplus
 }
 #endif
@@ -97,6 +103,18 @@ public:
 
     virtual void write_cr4(uint64_t val)
     { __write_cr4(val); }
+
+    virtual void write_portio_8(uint16_t port, uint8_t value)
+    { __outb(value, port); }
+
+    virtual void write_portio_16(uint16_t port, uint16_t value)
+    { __outw(value, port); }
+
+    virtual uint8_t read_portio_8(uint16_t port)
+    { return __inb(port); }
+
+    virtual uint16_t read_portio_16(uint16_t port)
+    { return __inw(port); }
 };
 
 // =============================================================================

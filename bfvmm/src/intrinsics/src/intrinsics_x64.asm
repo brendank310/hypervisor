@@ -30,6 +30,10 @@ global __read_cr0:function
 global __write_cr0:function
 global __read_cr4:function
 global __write_cr4:function
+global __outb:function
+global __inb:function
+global __outw:function
+global __inw:function
 
 section .text
 
@@ -145,3 +149,32 @@ __read_cr4:
 __write_cr4:
     mov cr4, rdi
     ret
+
+; void __outb(uint16_t val, uint16_t port)
+__outb:
+	mov ax, di
+	mov dx, si
+	out dx, al
+	ret
+
+; void __outw(uint16_t val, uint16_t port)
+__outw:
+	mov ax, di
+	mov dx, si
+	out dx, ax
+	ret
+
+
+; uint8_t __inb(uint16_t port)
+__inb:
+	mov al, 0
+	mov dx, di
+	in al, dx
+	ret
+
+; uint16_t __inw(uint16_t port)
+__inw:
+	mov eax, 0
+	mov edx, edi
+	in ax, dx
+	ret
