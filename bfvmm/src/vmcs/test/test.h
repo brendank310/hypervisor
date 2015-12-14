@@ -42,6 +42,31 @@ private:
     void test_check_host_cr0_for_unsupported_bits_missing_1s();
     void test_check_host_cr0_for_unsupported_bits_missing_0s();
     void test_check_host_cr0_for_unsupported_bits_valid();
+
+    void test_check_host_cr4_for_unsupported_bits_missing_1s();
+    void test_check_host_cr4_for_unsupported_bits_missing_0s();
+    void test_check_host_cr4_for_unsupported_bits_valid();
+
+    void test_check_host_cr3_for_unsupported_bits_invalid_width();
+    void test_check_host_cr3_for_unsupported_bits_valid_width();
+
+    void test_check_is_address_canonical_top_of_address_space();
+    void test_check_is_address_canonical_bottom_of_address_space();
+    void test_check_is_address_canonical_high_address_space_border();
+    void test_check_is_address_canonical_low_address_space_border();
+
+    void test_check_host_ia32_sysenter_esp_canonical_address_valid();
+    void test_check_host_ia32_sysenter_esp_canonical_address_invalid();
+
+    void test_check_host_ia32_sysenter_eip_canonical_address_valid();
+    void test_check_host_ia32_sysenter_eip_canonical_address_invalid();
+
+    void test_check_host_ia32_perf_global_ctrl_for_reserved_bits_valid();
+    void test_check_host_ia32_perf_global_ctrl_for_reserved_bits_invalid();
+
+    void test_check_host_ia32_pat_for_unsupported_bits_valid();
+    void test_check_host_ia32_pat_for_unsupported_bits_invalid();
+
 };
 
 #endif
