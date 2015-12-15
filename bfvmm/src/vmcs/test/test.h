@@ -67,6 +67,60 @@ private:
     void test_check_host_ia32_pat_for_unsupported_bits_valid();
     void test_check_host_ia32_pat_for_unsupported_bits_invalid();
 
+    void test_check_host_verify_load_ia32_efer_enabled_invalid();
+    void test_check_host_verify_load_ia32_efer_enabled_valid();
+
+    void test_check_host_ia32_efer_for_reserved_bits_invalid();
+    void test_check_host_ia32_efer_for_reserved_bits_valid();
+
+    void test_check_host_ia32_efer_set_invalid();
+    void test_check_host_ia32_efer_set_valid();
+
+    void test_check_host_es_selector_rpl_ti_equal_zero_invalid();
+    void test_check_host_es_selector_rpl_ti_equal_zero_valid();
+
+    void test_check_host_cs_selector_rpl_ti_equal_zero_invalid();
+    void test_check_host_cs_selector_rpl_ti_equal_zero_valid();
+
+    void test_check_host_ss_selector_rpl_ti_equal_zero_invalid();
+    void test_check_host_ss_selector_rpl_ti_equal_zero_valid();
+
+    void test_check_host_ds_selector_rpl_ti_equal_zero_invalid();
+    void test_check_host_ds_selector_rpl_ti_equal_zero_valid();
+
+    void test_check_host_fs_selector_rpl_ti_equal_zero_invalid();
+    void test_check_host_fs_selector_rpl_ti_equal_zero_valid();
+
+    void test_check_host_gs_selector_rpl_ti_equal_zero_invalid();
+    void test_check_host_gs_selector_rpl_ti_equal_zero_valid();
+
+    void test_check_host_tr_selector_rpl_ti_equal_zero_invalid();
+    void test_check_host_tr_selector_rpl_ti_equal_zero_valid();
+
+    void test_check_host_cs_not_equal_zero_invalid();
+    void test_check_host_cs_not_equal_zero_valid();
+
+    void test_check_host_tr_not_equal_zero_invalid();
+    void test_check_host_tr_not_equal_zero_valid();
+
+    void test_check_host_ss_not_equal_zero_invalid();
+    void test_check_host_ss_not_equal_zero_valid_non_zero_selector();
+    void test_check_host_ss_not_equal_zero_valid_zero_selector();
+
+    void test_check_host_fs_canonical_base_address_invalid();
+    void test_check_host_fs_canonical_base_address_valid();
+
+    void test_check_host_gs_canonical_base_address_invalid();
+    void test_check_host_gs_canonical_base_address_valid();
+
+    void test_check_host_gdtr_canonical_base_address_invalid();
+    void test_check_host_gdtr_canonical_base_address_valid();
+
+    void test_check_host_idtr_canonical_base_address_invalid();
+    void test_check_host_idtr_canonical_base_address_valid();
+
+    void test_check_host_tr_canonical_base_address_invalid();
+    void test_check_host_tr_canonical_base_address_valid();
 };
 
 #endif

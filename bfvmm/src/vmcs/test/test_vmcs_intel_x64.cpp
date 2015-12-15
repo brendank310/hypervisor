@@ -215,28 +215,31 @@ vmcs_ut::test_check_host_cr3_for_unsupported_bits_valid_width()
 void
 vmcs_ut::test_check_is_address_canonical_top_of_address_space()
 {
+    MockRepository mocks;
     vmcs_intel_x64 vmcs;
     uint64_t top_addr = 0xFFFFFFFFFFFFFFFF;
     uint64_t below_top_addr = 0xFFFFFFFFFFFFFFFE;
 
-    EXPECT_TRUE(vmcs.check_is_address_canonical(top_addr));
-    EXPECT_TRUE(vmcs.check_is_address_canonical(below_top_addr));
+    EXPECT_TRUE(vmcs.check_is_address_canonical(top_addr) == true);
+    EXPECT_TRUE(vmcs.check_is_address_canonical(below_top_addr) == true);
 }
 
 void
 vmcs_ut::test_check_is_address_canonical_bottom_of_address_space()
 {
+    MockRepository mocks;
     vmcs_intel_x64 vmcs;
     uint64_t bottom_addr = 0x00;
     uint64_t above_bottom_addr = 0x01;
 
-    EXPECT_TRUE(vmcs.check_is_address_canonical(bottom_addr));
-    EXPECT_TRUE(vmcs.check_is_address_canonical(above_bottom_addr));
+    EXPECT_TRUE(vmcs.check_is_address_canonical(bottom_addr) == true);
+    EXPECT_TRUE(vmcs.check_is_address_canonical(above_bottom_addr) == true);
 }
 
 void
 vmcs_ut::test_check_is_address_canonical_high_address_space_border()
 {
+    MockRepository mocks;
     vmcs_intel_x64 vmcs;
     uint64_t below_high_border = 0xFFFF7FFFFFFFFFFF;;  // false
     uint64_t high_border = 0xFFFF800000000000; // true
@@ -250,6 +253,7 @@ vmcs_ut::test_check_is_address_canonical_high_address_space_border()
 void
 vmcs_ut::test_check_is_address_canonical_low_address_space_border()
 {
+    MockRepository mocks;
     vmcs_intel_x64 vmcs;
     uint64_t above_low_border = 0x0000800000000000;  // false
     uint64_t low_border = 0x00007FFFFFFFFFFF; // true
@@ -270,7 +274,8 @@ vmcs_ut::test_check_host_ia32_sysenter_esp_canonical_address_valid()
     vmcs_intel_x64 vmcs;
     vmcs.init(intrinsics, mm);
 
-    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(true);
+    fake_vmread_return = 0x0;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
@@ -288,7 +293,8 @@ vmcs_ut::test_check_host_ia32_sysenter_esp_canonical_address_invalid()
     vmcs_intel_x64 vmcs;
     vmcs.init(intrinsics, mm);
 
-    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(false);
+    fake_vmread_return = 0x0000800000000000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
@@ -307,7 +313,8 @@ vmcs_ut::test_check_host_ia32_sysenter_eip_canonical_address_valid()
     vmcs_intel_x64 vmcs;
     vmcs.init(intrinsics, mm);
 
-    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(true);
+    fake_vmread_return = 0x00;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
@@ -325,7 +332,8 @@ vmcs_ut::test_check_host_ia32_sysenter_eip_canonical_address_invalid()
     vmcs_intel_x64 vmcs;
     vmcs.init(intrinsics, mm);
 
-    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(false);
+    fake_vmread_return = 0x0000800000000000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
@@ -351,7 +359,6 @@ vmcs_ut::test_check_host_ia32_perf_global_ctrl_for_reserved_bits_invalid()
     {
         EXPECT_TRUE(vmcs.check_host_ia32_perf_global_ctrl_for_reserved_bits() == false);
     });
-
 }
 
 void
@@ -412,6 +419,711 @@ vmcs_ut::test_check_host_ia32_pat_for_unsupported_bits_valid()
         EXPECT_TRUE(vmcs.check_host_ia32_perf_global_ctrl_for_reserved_bits() == true);
     });
 }
+
+void
+vmcs_ut::test_check_host_verify_load_ia32_efer_enabled_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_verify_load_ia32_efer_enabled() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_verify_load_ia32_efer_enabled_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = VM_ENTRY_CONTROL_LOAD_IA32_EFER;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_verify_load_ia32_efer_enabled() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ia32_efer_for_reserved_bits_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0xFFFFFFFFFFFFFFFF;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ia32_efer_for_reserved_bits() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ia32_efer_for_reserved_bits_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ia32_efer_for_reserved_bits() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ia32_efer_set_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0000000000000000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ia32_efer_set() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ia32_efer_set_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0000000000000500;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ia32_efer_set() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_es_selector_rpl_ti_equal_zero_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0007;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_es_selector_rpl_ti_equal_zero() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_es_selector_rpl_ti_equal_zero_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x00;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_es_selector_rpl_ti_equal_zero() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_cs_selector_rpl_ti_equal_zero_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0007;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_cs_selector_rpl_ti_equal_zero() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_cs_selector_rpl_ti_equal_zero_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_cs_selector_rpl_ti_equal_zero() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ss_selector_rpl_ti_equal_zero_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0007;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ss_selector_rpl_ti_equal_zero() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ss_selector_rpl_ti_equal_zero_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ss_selector_rpl_ti_equal_zero() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ds_selector_rpl_ti_equal_zero_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0007;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ds_selector_rpl_ti_equal_zero() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ds_selector_rpl_ti_equal_zero_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ds_selector_rpl_ti_equal_zero() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_fs_selector_rpl_ti_equal_zero_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0007;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_fs_selector_rpl_ti_equal_zero() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_fs_selector_rpl_ti_equal_zero_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_fs_selector_rpl_ti_equal_zero() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_gs_selector_rpl_ti_equal_zero_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0007;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_gs_selector_rpl_ti_equal_zero() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_gs_selector_rpl_ti_equal_zero_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_gs_selector_rpl_ti_equal_zero() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_tr_selector_rpl_ti_equal_zero_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0007;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_tr_selector_rpl_ti_equal_zero() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_tr_selector_rpl_ti_equal_zero_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_tr_selector_rpl_ti_equal_zero() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_cs_not_equal_zero_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0xFFFF;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_cs_not_equal_zero() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_cs_not_equal_zero_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_cs_not_equal_zero() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_tr_not_equal_zero_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0xFFFF;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_tr_not_equal_zero() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_tr_not_equal_zero_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    fake_vmread_return = 0x0000;
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).Do(fake_vmread);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_tr_not_equal_zero() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ss_not_equal_zero_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    uint64_t tmp = (~VM_EXIT_CONTROL_HOST_ADDRESS_SPACE_SIZE);
+    uint64_t tmp2 = 0x0000;
+
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).With(VMCS_VM_EXIT_CONTROLS, &tmp).Return(true);
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).With(VMCS_HOST_SS_SELECTOR, &tmp2).Return(true);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ss_not_equal_zero() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ss_not_equal_zero_valid_non_zero_selector()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    uint64_t tmp = (~VM_EXIT_CONTROL_HOST_ADDRESS_SPACE_SIZE);
+    uint64_t tmp2 = 0xffff;
+
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).With(VMCS_VM_EXIT_CONTROLS, &tmp).Return(true);
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).With(VMCS_HOST_SS_SELECTOR, &tmp2).Return(true);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ss_not_equal_zero() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_ss_not_equal_zero_valid_zero_selector()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+
+    uint64_t tmp = (VM_EXIT_CONTROL_HOST_ADDRESS_SPACE_SIZE);
+    uint64_t tmp2 = 0x0000;
+
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).With(VMCS_VM_EXIT_CONTROLS, &tmp).Return(true);
+    mocks.OnCall(intrinsics, intrinsics_intel_x64::vmread).With(VMCS_HOST_SS_SELECTOR, &tmp2).Return(true);
+    std::cout << __LINE__ << std::endl;
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_ss_not_equal_zero() == true);
+    });
+        std::cout << __LINE__ << std::endl;
+}
+
+void
+vmcs_ut::test_check_host_fs_canonical_base_address_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+    std::cout << __LINE__ << std::endl;
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(false);
+    std::cout << __LINE__ << std::endl;
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_fs_canonical_base_address() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_fs_canonical_base_address_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(true);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_fs_canonical_base_address() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_gs_canonical_base_address_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(false);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_gs_canonical_base_address() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_gs_canonical_base_address_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(true);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_gs_canonical_base_address() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_gdtr_canonical_base_address_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(false);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_gdtr_canonical_base_address() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_gdtr_canonical_base_address_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(true);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_gdtr_canonical_base_address() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_idtr_canonical_base_address_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(false);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_idtr_canonical_base_address() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_idtr_canonical_base_address_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(true);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_idtr_canonical_base_address() == true);
+    });
+}
+
+void
+vmcs_ut::test_check_host_tr_canonical_base_address_invalid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(false);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_tr_canonical_base_address() == false);
+    });
+}
+
+void
+vmcs_ut::test_check_host_tr_canonical_base_address_valid()
+{
+    MockRepository mocks;
+    memory_manager *mm = mocks.Mock<memory_manager>();
+    intrinsics_intel_x64 *intrinsics = mocks.Mock<intrinsics_intel_x64>();
+
+    vmcs_intel_x64 vmcs;
+    vmcs.init(intrinsics, mm);
+
+    mocks.OnCall(&vmcs, vmcs_intel_x64::check_is_address_canonical).Return(true);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        EXPECT_TRUE(vmcs.check_host_tr_canonical_base_address() == true);
+    });
+}
+
 
 
 // REMOVE ME:
