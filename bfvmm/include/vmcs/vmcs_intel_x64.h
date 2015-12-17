@@ -25,6 +25,7 @@
 #include <vmcs/vmcs.h>
 #include <intrinsics/intrinsics_intel_x64.h>
 
+
 class vmcs_intel_x64 : public vmcs
 {
 public:

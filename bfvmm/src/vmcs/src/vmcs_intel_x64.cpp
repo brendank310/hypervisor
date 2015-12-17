@@ -62,6 +62,127 @@ vmcs_intel_x64::init(intrinsics *intrinsics,
     return vmcs_error::success;
 }
 
+#define LOW_MSR_BASE 0x0000
+#define LOW_MSR_LIMIT 0x2000
+#define HIGH_MSR_BASE 0xC0000000
+#define HIGH_MSR_LIMIT 0xC0002000
+
+inline void
+set_wrmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
+{
+    if(msr >= LOW_MSR_BASE && msr < LOW_MSR_LIMIT)
+    {
+        uint8_t *wrmsr_bitmap = msr_bitmap + 2048;
+        uint16_t byte_index = msr / sizeof(uint8_t);
+        uint8_t bit_index = msr % sizeof(uint8_t);
+
+        wrmsr_bitmap[byte_index] |= (uint8_t)(1<<bit_index);
+    }
+    else if(msr >= HIGH_MSR_BASE && msr < HIGH_MSR_LIMIT)
+    {
+        uint8_t *wrmsr_bitmap = msr_bitmap + 3072;
+        uint16_t byte_index = (msr / sizeof(uint8_t)) - HIGH_MSR_BASE;
+        uint8_t bit_index = msr % sizeof(uint8_t);
+
+        wrmsr_bitmap[byte_index] |= (uint8_t)(1<<bit_index);
+    }
+}
+
+inline void
+clear_wrmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
+{
+    if(msr >= LOW_MSR_BASE && msr < LOW_MSR_LIMIT)
+    {
+        uint8_t *wrmsr_bitmap = msr_bitmap + 2048;
+        uint16_t byte_index = msr / sizeof(uint8_t);
+        uint8_t bit_index = msr % sizeof(uint8_t);
+
+        std::cout << msr << (unsigned char)(~(1<<bit_index)) << std::endl;
+        wrmsr_bitmap[byte_index] &= (uint8_t)(~(1<<bit_index));
+        std::cout << wrmsr_bitmap[byte_index];
+    }
+    else if(msr >= HIGH_MSR_BASE && msr < HIGH_MSR_LIMIT)
+    {
+        uint8_t *wrmsr_bitmap = msr_bitmap + 3072;
+        uint16_t byte_index = (msr / sizeof(uint8_t)) - HIGH_MSR_BASE;
+        uint8_t bit_index = msr % sizeof(uint8_t);
+
+        std::cout << msr << (unsigned char)(~(1<<bit_index)) << std::endl;
+        wrmsr_bitmap[byte_index] &= (uint8_t)(~(1<<bit_index));
+        std::cout << wrmsr_bitmap[byte_index];
+    }
+}
+
+inline void
+set_rdmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
+{
+    if(msr >= LOW_MSR_BASE && msr < LOW_MSR_LIMIT)
+    {
+        uint8_t *wrmsr_bitmap = msr_bitmap;
+        uint16_t byte_index = msr / sizeof(uint8_t);
+        uint8_t bit_index = msr % sizeof(uint8_t);
+
+        wrmsr_bitmap[byte_index] |= (uint8_t)(1<<bit_index);
+    }
+    else if(msr >= HIGH_MSR_BASE && msr < HIGH_MSR_LIMIT)
+    {
+        uint8_t *wrmsr_bitmap = msr_bitmap + 1024;
+        uint16_t byte_index = (msr / sizeof(uint8_t)) - HIGH_MSR_BASE;
+        uint8_t bit_index = msr % sizeof(uint8_t);
+
+        wrmsr_bitmap[byte_index] |= (uint8_t)(1<<bit_index);
+    }
+}
+
+inline void
+clear_rdmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
+{
+    if(msr >= LOW_MSR_BASE && msr < LOW_MSR_LIMIT)
+    {
+        uint8_t *wrmsr_bitmap = msr_bitmap;
+        uint16_t byte_index = msr / sizeof(uint8_t);
+        uint8_t bit_index = msr % sizeof(uint8_t);
+
+        wrmsr_bitmap[byte_index] &= (uint8_t)(~(1<<bit_index));
+    }
+    else if(msr >= HIGH_MSR_BASE && msr < HIGH_MSR_LIMIT)
+    {
+        uint8_t *wrmsr_bitmap = msr_bitmap + 1024;
+        uint16_t byte_index = (msr / sizeof(uint8_t)) - HIGH_MSR_BASE;
+        uint8_t bit_index = msr % sizeof(uint8_t);
+
+        wrmsr_bitmap[byte_index] &= (uint8_t)(~(1<<bit_index));
+    }
+}
+
+inline void
+dump_hex(uint8_t *buffer, uint16_t length)
+{
+    int i = 0;
+    for(i = 0; i < length; i+=16)
+    {
+        std::cout << std::hex;
+        std::cout << (buffer+i) << " | "
+                  << buffer[i] << " "
+                  << buffer[i + 1] << " "
+                  << buffer[i + 2] << " "
+                  << buffer[i + 3] << " "
+                  << buffer[i + 4] << " "
+                  << buffer[i + 5] << " "
+                  << buffer[i + 6] << " "
+                  << buffer[i + 7] << "  "
+                  << buffer[i + 8] << " "
+                  << buffer[i + 9] << " "
+                  << buffer[i + 10] << " "
+                  << buffer[i + 11] << " "
+                  << buffer[i + 12] << " "
+                  << buffer[i + 13] << " "
+                  << buffer[i + 14] << " "
+                  << buffer[i + 15] << std::endl;
+         std::cout << std::dec;
+    }
+}
+
 vmcs_error::type
 vmcs_intel_x64::launch()
 {
@@ -188,7 +309,14 @@ vmcs_intel_x64::launch()
 
     auto buf = (char *)m_msr_bitmap.virt_addr();
     for (auto i = 0; i < m_msr_bitmap.size(); i++)
-        buf[i] = 0;
+    {
+        buf[i] = 0xff;
+    }
+
+    clear_wrmsr_bitmap_bit(0x6e0, (uint8_t*)buf);
+    clear_wrmsr_bitmap_bit(0x80b, (uint8_t*)buf);
+
+    dump_hex((uint8_t*)buf, 4096);
 
     vmwrite(VMCS_ADDRESS_OF_MSR_BITMAPS_FULL, (uint64_t)m_msr_bitmap.phys_addr());
 

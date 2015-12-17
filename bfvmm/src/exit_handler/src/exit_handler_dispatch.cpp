@@ -339,14 +339,8 @@ exit_handler_dispatch::handle_task_switch()
 void
 exit_handler_dispatch::handle_cpuid()
 {
-    std::cout << std::hex << std::endl;
-    std::cout << "cpuid: " << std::endl;
-    std::cout << "  - rax: 0x" << g_guest_rax << std::endl;
+
     guest_cpuid();
-    std::cout << "  - rax: 0x" << g_guest_rax << std::endl;
-    std::cout << "  - rbx: 0x" << g_guest_rbx << std::endl;
-    std::cout << "  - rcx: 0x" << g_guest_rcx << std::endl;
-    std::cout << "  - rdx: 0x" << g_guest_rdx << std::endl;
     spin_wait();
 
     advance_rip();
@@ -435,14 +429,18 @@ exit_handler_dispatch::handle_io_instruction()
 void
 exit_handler_dispatch::handle_rdmsr()
 {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
     guest_read_msr();
+    dump_cpu_state();
     advance_rip();
 }
 
 void
 exit_handler_dispatch::handle_wrmsr()
 {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
     guest_write_msr();
+    dump_cpu_state();
     advance_rip();
 }
 
@@ -581,6 +579,20 @@ exit_handler_dispatch::unimplemented_handler()
     spin_wait();
 
     m_intrinsics_intel_x64->halt();
+}
+
+void
+exit_handler_dispatch::dump_cpu_state()
+{
+    std::cout << std::hex << std::endl;
+    std::cout << "---------------------------------------------" << std::endl;
+    std::cout << "  - rip: 0x" << g_guest_rip << std::endl;
+    std::cout << "  - rax: 0x" << g_guest_rax << std::endl;
+    std::cout << "  - rbx: 0x" << g_guest_rbx << std::endl;
+    std::cout << "  - rcx: 0x" << g_guest_rcx << std::endl;
+    std::cout << "  - rdx: 0x" << g_guest_rdx << std::endl;
+    std::cout << "---------------------------------------------" << std::endl;
+    std::cout << std::dec << std::endl;
 }
 
 const char *
