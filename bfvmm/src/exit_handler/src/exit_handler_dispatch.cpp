@@ -444,12 +444,18 @@ exit_handler_dispatch::handle_wrmsr()
     {
         case IA32_FS_BASE:
         {
-            m_vmcs_intel_x64->vmwrite(VMCS_GUEST_FS_BASE, m_intrinsics->read_msr(IA32_FS_BASE));
+            std::cout << "About to write FS_BASE into the vmcs guest area" << std::endl;
+            dump_cpu_state();
+            spin_wait();
+            m_vmcs_intel_x64->vmwrite(VMCS_GUEST_FS_BASE, m_intrinsics_intel_x64->read_msr(IA32_FS_BASE));
             break;
         }
         case IA32_GS_BASE:
         {
-            m_vmcs_intel_x64->vmwrite(VMCS_GUEST_FS_BASE, m_intrinsics->read_msr(IA32_FS_BASE));
+            std::cout << "About to write GS_BASE into the vmcs guest area" << std::endl;
+            dump_cpu_state();
+            spin_wait();
+            m_vmcs_intel_x64->vmwrite(VMCS_GUEST_GS_BASE, m_intrinsics_intel_x64->read_msr(IA32_GS_BASE));
             break;
         }
         default:

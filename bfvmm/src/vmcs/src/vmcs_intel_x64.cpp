@@ -808,6 +808,10 @@ vmcs_intel_x64::write_natural_width_guest_state_fields()
     vmwrite(VMCS_GUEST_CS_BASE, m_cs_base);
     vmwrite(VMCS_GUEST_SS_BASE, m_ss_base);
     vmwrite(VMCS_GUEST_DS_BASE, m_ds_base);
+
+    std::cout << std::hex;
+    std::cout << "FS_Base: 0x" << m_intrinsics->read_msr(IA32_FS_BASE) << std::endl;
+    std::cout << "GS_Base: 0x" << m_intrinsics->read_msr(IA32_GS_BASE) << std::endl;
     vmwrite(VMCS_GUEST_FS_BASE, m_intrinsics->read_msr(IA32_FS_BASE));
     vmwrite(VMCS_GUEST_GS_BASE, m_intrinsics->read_msr(IA32_GS_BASE));
     // vmwrite(VMCS_GUEST_FS_BASE, m_fs_base);
