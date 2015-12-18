@@ -96,10 +96,11 @@ clear_wrmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
         uint8_t *wrmsr_bitmap = msr_bitmap + 2048;
         uint16_t byte_index = msr / sizeof(uint8_t);
         uint8_t bit_index = msr % sizeof(uint8_t);
-
-        std::cout << msr << (unsigned char)(~(1<<bit_index)) << std::endl;
+        std::cout << std::hex;
+        std::cout << "msr: 0x" << msr << " bitmask:" << (unsigned char)(~(1<<bit_index)) << std::endl;
+        std::cout << "msrbitmap index: " << byte_index << " bit: " << bit_index << std::endl;
         wrmsr_bitmap[byte_index] &= (uint8_t)(~(1<<bit_index));
-        std::cout << wrmsr_bitmap[byte_index];
+        std::cout << "wrmsr_low byte value: " << wrmsr_bitmap[byte_index] << std::endl;
     }
     else if(msr >= HIGH_MSR_BASE && msr < HIGH_MSR_LIMIT)
     {
@@ -107,9 +108,11 @@ clear_wrmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
         uint16_t byte_index = (msr / sizeof(uint8_t)) - HIGH_MSR_BASE;
         uint8_t bit_index = msr % sizeof(uint8_t);
 
-        std::cout << msr << (unsigned char)(~(1<<bit_index)) << std::endl;
+        std::cout << std::hex;
+        std::cout << "msr: 0x" << msr << " bitmask:" << (unsigned char)(~(1<<bit_index)) << std::endl;
+        std::cout << "msrbitmap index: " << byte_index << " bit: " << bit_index << std::endl;
         wrmsr_bitmap[byte_index] &= (uint8_t)(~(1<<bit_index));
-        std::cout << wrmsr_bitmap[byte_index];
+        std::cout << "wrmsr_high byte value: " << wrmsr_bitmap[byte_index] << std::endl;
     }
 }
 
