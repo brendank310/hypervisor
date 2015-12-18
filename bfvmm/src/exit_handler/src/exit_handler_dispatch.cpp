@@ -460,7 +460,6 @@ exit_handler_dispatch::handle_wrmsr()
         }
         default:
         {
-            dump_cpu_state();
             guest_write_msr();
             break;
         }
