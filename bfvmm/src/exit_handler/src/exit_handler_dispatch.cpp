@@ -439,8 +439,27 @@ void
 exit_handler_dispatch::handle_wrmsr()
 {
     std::cout << __PRETTY_FUNCTION__ << std::endl;
-    guest_write_msr();
-    dump_cpu_state();
+
+    switch(g_guest_rcx)
+    {
+        case IA32_FS_BASE:
+        {
+            m_vmcs_intel_x64->vmwrite(VMCS_GUEST_FS_BASE, m_intrinsics->read_msr(IA32_FS_BASE));
+            break;
+        }
+        case IA32_GS_BASE:
+        {
+            m_vmcs_intel_x64->vmwrite(VMCS_GUEST_FS_BASE, m_intrinsics->read_msr(IA32_FS_BASE));
+            break;
+        }
+        default:
+        {
+            dump_cpu_state();
+            guest_write_msr();
+            break;
+        }
+    }
+
     advance_rip();
 }
 

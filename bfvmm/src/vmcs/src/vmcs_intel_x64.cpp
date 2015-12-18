@@ -318,6 +318,7 @@ vmcs_intel_x64::launch()
 
     clear_wrmsr_bitmap_bit(0x6e0, (uint8_t*)buf);
     clear_wrmsr_bitmap_bit(0x80b, (uint8_t*)buf);
+    clear_wrmsr_bitmap_bit(IA32_FS_BASE, (uint8_t*)buf);
 
     dump_hex((uint8_t*)buf, 4096);
 
