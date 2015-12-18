@@ -313,11 +313,11 @@ vmcs_intel_x64::launch()
     auto buf = (char *)m_msr_bitmap.virt_addr();
     for (auto i = 0; i < m_msr_bitmap.size(); i++)
     {
-        buf[i] = 0xff;
+        buf[i] = 0x00;
     }
 
-    clear_wrmsr_bitmap_bit(IA32_FS_BASE, (uint8_t*)buf);
-    clear_wrmsr_bitmap_bit(IA32_GS_BASE, (uint8_t*)buf);
+    set_wrmsr_bitmap_bit(IA32_FS_BASE, (uint8_t*)buf);
+    set_wrmsr_bitmap_bit(IA32_GS_BASE, (uint8_t*)buf);
 
     std::cout << "MSR Bitmap 0:" << std::endl;
     dump_hex((uint8_t*)buf, 1024);
