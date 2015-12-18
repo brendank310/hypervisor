@@ -73,16 +73,16 @@ set_wrmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
     if(msr >= LOW_MSR_BASE && msr < LOW_MSR_LIMIT)
     {
         uint8_t *wrmsr_bitmap = msr_bitmap + 2048;
-        uint16_t byte_index = msr / sizeof(uint8_t);
-        uint8_t bit_index = msr % sizeof(uint8_t);
+        uint16_t byte_index = msr / 8;
+        uint8_t bit_index = msr % 8;
 
         wrmsr_bitmap[byte_index] |= (uint8_t)(1<<bit_index);
     }
     else if(msr >= HIGH_MSR_BASE && msr < HIGH_MSR_LIMIT)
     {
         uint8_t *wrmsr_bitmap = msr_bitmap + 3072;
-        uint16_t byte_index = (msr / sizeof(uint8_t)) - HIGH_MSR_BASE;
-        uint8_t bit_index = msr % sizeof(uint8_t);
+        uint16_t byte_index = (msr / 8) - HIGH_MSR_BASE;
+        uint8_t bit_index = msr % 8;
 
         wrmsr_bitmap[byte_index] |= (uint8_t)(1<<bit_index);
     }
@@ -94,8 +94,8 @@ clear_wrmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
     if(msr >= LOW_MSR_BASE && msr < LOW_MSR_LIMIT)
     {
         uint8_t *wrmsr_bitmap = msr_bitmap + 2048;
-        uint16_t byte_index = msr / sizeof(uint8_t);
-        uint8_t bit_index = msr % sizeof(uint8_t);
+        uint16_t byte_index = msr / 8;
+        uint8_t bit_index = msr % 8;
         std::cout << std::hex;
         std::cout << "msr: 0x" << msr << " bitmask:" << (unsigned char)(~(1<<bit_index)) << std::endl;
         std::cout << "msrbitmap index: " << byte_index << " bit: " << bit_index << std::endl;
@@ -105,8 +105,8 @@ clear_wrmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
     else if(msr >= HIGH_MSR_BASE && msr < HIGH_MSR_LIMIT)
     {
         uint8_t *wrmsr_bitmap = msr_bitmap + 3072;
-        uint16_t byte_index = (msr / sizeof(uint8_t)) - HIGH_MSR_BASE;
-        uint8_t bit_index = msr % sizeof(uint8_t);
+        uint16_t byte_index = (msr / 8) - HIGH_MSR_BASE;
+        uint8_t bit_index = msr % 8;
 
         std::cout << std::hex;
         std::cout << "msr: 0x" << msr << " bitmask:" << (unsigned char)(~(1<<bit_index)) << std::endl;
@@ -122,16 +122,16 @@ set_rdmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
     if(msr >= LOW_MSR_BASE && msr < LOW_MSR_LIMIT)
     {
         uint8_t *wrmsr_bitmap = msr_bitmap;
-        uint16_t byte_index = msr / sizeof(uint8_t);
-        uint8_t bit_index = msr % sizeof(uint8_t);
+        uint16_t byte_index = msr / 8;
+        uint8_t bit_index = msr % 8;
 
         wrmsr_bitmap[byte_index] |= (uint8_t)(1<<bit_index);
     }
     else if(msr >= HIGH_MSR_BASE && msr < HIGH_MSR_LIMIT)
     {
         uint8_t *wrmsr_bitmap = msr_bitmap + 1024;
-        uint16_t byte_index = (msr / sizeof(uint8_t)) - HIGH_MSR_BASE;
-        uint8_t bit_index = msr % sizeof(uint8_t);
+        uint16_t byte_index = (msr / 8) - HIGH_MSR_BASE;
+        uint8_t bit_index = msr % 8;
 
         wrmsr_bitmap[byte_index] |= (uint8_t)(1<<bit_index);
     }
@@ -143,16 +143,16 @@ clear_rdmsr_bitmap_bit(uint32_t msr, uint8_t *msr_bitmap)
     if(msr >= LOW_MSR_BASE && msr < LOW_MSR_LIMIT)
     {
         uint8_t *wrmsr_bitmap = msr_bitmap;
-        uint16_t byte_index = msr / sizeof(uint8_t);
-        uint8_t bit_index = msr % sizeof(uint8_t);
+        uint16_t byte_index = msr / 8;
+        uint8_t bit_index = msr % 8;
 
         wrmsr_bitmap[byte_index] &= (uint8_t)(~(1<<bit_index));
     }
     else if(msr >= HIGH_MSR_BASE && msr < HIGH_MSR_LIMIT)
     {
         uint8_t *wrmsr_bitmap = msr_bitmap + 1024;
-        uint16_t byte_index = (msr / sizeof(uint8_t)) - HIGH_MSR_BASE;
-        uint8_t bit_index = msr % sizeof(uint8_t);
+        uint16_t byte_index = (msr / 8) - HIGH_MSR_BASE;
+        uint8_t bit_index = msr % 8;
 
         wrmsr_bitmap[byte_index] &= (uint8_t)(~(1<<bit_index));
     }
