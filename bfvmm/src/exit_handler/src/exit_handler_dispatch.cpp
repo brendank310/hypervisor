@@ -444,23 +444,26 @@ exit_handler_dispatch::handle_wrmsr()
     {
         case IA32_FS_BASE:
         {
+            uint64_t msr_val;
             std::cout << "About to write FS_BASE into the vmcs guest area" << std::endl;
             dump_cpu_state();
             spin_wait();
-            m_vmcs_intel_x64->vmwrite(VMCS_GUEST_FS_BASE, m_intrinsics_intel_x64->read_msr(IA32_FS_BASE));
+            msr_val = (g_guest_rdx<<32)|(g_guest_rax & 0x00000000FFFFFFFF);
+            m_vmcs_intel_x64->vmwrite(VMCS_GUEST_FS_BASE, msr_val);
             break;
         }
         case IA32_GS_BASE:
         {
-            std::cout << "About to write GS_BASE into the vmcs guest area" << std::endl;
+            uint64_t msr_val;
+            std::cout << "About to write FS_BASE into the vmcs guest area" << std::endl;
             dump_cpu_state();
             spin_wait();
-            m_vmcs_intel_x64->vmwrite(VMCS_GUEST_GS_BASE, m_intrinsics_intel_x64->read_msr(IA32_GS_BASE));
+            msr_val = (g_guest_rdx<<32)|(g_guest_rax & 0x00000000FFFFFFFF);
+            m_vmcs_intel_x64->vmwrite(VMCS_GUEST_GS_BASE, msr_val);
             break;
         }
         default:
         {
-            dump_cpu_state();
             guest_write_msr();
             break;
         }

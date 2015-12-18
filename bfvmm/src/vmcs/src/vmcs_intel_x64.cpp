@@ -316,11 +316,20 @@ vmcs_intel_x64::launch()
         buf[i] = 0xff;
     }
 
-    clear_wrmsr_bitmap_bit(0x6e0, (uint8_t*)buf);
-    clear_wrmsr_bitmap_bit(0x80b, (uint8_t*)buf);
     clear_wrmsr_bitmap_bit(IA32_FS_BASE, (uint8_t*)buf);
+    clear_wrmsr_bitmap_bit(IA32_GS_BASE, (uint8_t*)buf);
 
-    dump_hex((uint8_t*)buf, 4096);
+    std::cout << "MSR Bitmap 0:" << std::endl;
+    dump_hex((uint8_t*)buf, 1024);
+
+    std::cout << std::endl << "MSR Bitmap 1:" << std::endl;
+    dump_hex((uint8_t*)buf+1024, 1024);
+
+    std::cout << std::endl << "MSR Bitmap 2:" << std::endl;
+    dump_hex((uint8_t*)buf+2048, 1024);
+
+    std::cout << std::endl << "MSR Bitmap 3:" << std::endl;
+    dump_hex((uint8_t*)buf+3072, 1024);
 
     vmwrite(VMCS_ADDRESS_OF_MSR_BITMAPS_FULL, (uint64_t)m_msr_bitmap.phys_addr());
 
