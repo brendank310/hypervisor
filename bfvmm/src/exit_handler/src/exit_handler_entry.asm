@@ -40,6 +40,12 @@ global g_guest_r15:data
 global g_guest_rsp:data
 global g_guest_rip:data
 
+global g_guest_cr0:data
+global g_guest_cr1:data
+global g_guest_cr2:data
+global g_guest_cr3:data
+global g_guest_cr4:data
+
 extern exit_handler
 global exit_handler_entry
 
@@ -62,6 +68,12 @@ g_guest_r14 dq 0
 g_guest_r15 dq 0
 g_guest_rsp dq 0
 g_guest_rip dq 0
+
+g_guest_cr0 dw 0
+g_guest_cr1 dw 0
+g_guest_cr2 dw 0
+g_guest_cr3 dw 0
+g_guest_cr4 dw 0
 
 section .text
 
@@ -101,6 +113,17 @@ exit_handler_entry:
     mov [g_guest_r13], r13
     mov [g_guest_r14], r14
     mov [g_guest_r15], r15
+    
+    push rax
+    mov rax, cr0
+    mov [g_guest_cr0], rax
+    mov rax, cr2    
+    mov [g_guest_cr2], rax
+    mov rax, cr3
+    mov [g_guest_cr3], rax
+    mov rax, cr4
+    mov [g_guest_cr4], rax
+    pop rax
 
     ; RSP, RIP
     mov rdi, 0x0000681C
@@ -132,6 +155,17 @@ exit_handler_entry:
     mov rcx, [g_guest_rcx]
     mov rbx, [g_guest_rbx]
     mov rax, [g_guest_rax]
+
+    push rax
+    mov rax, [g_guest_cr0]
+    mov cr0, rax
+    mov rax, [g_guest_cr2]    
+    mov cr2, rax
+    mov rax, [g_guest_cr3]
+    mov cr3, rax
+    mov rax, [g_guest_cr4]
+    mov cr4, rax
+    pop rax
 
     sti
 

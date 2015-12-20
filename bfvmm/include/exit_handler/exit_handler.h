@@ -75,6 +75,11 @@ extern "C"
     extern uint64_t g_guest_rsp;
     extern uint64_t g_guest_rip;
 
+    extern uint32_t g_guest_cr0;
+    extern uint32_t g_guest_cr2;
+    extern uint32_t g_guest_cr3;
+    extern uint32_t g_guest_cr4;
+
     /// Guest CPUID
     ///
     /// Executes the CPUID instruction using the guest state instead of the
