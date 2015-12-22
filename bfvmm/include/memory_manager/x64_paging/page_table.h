@@ -59,33 +59,33 @@ public:
     ///
     virtual bool remove_entry(void *virtual_address);
 
-    /// Allocate Page
-    ///
-    /// Changes the page's is_allocated() status to true
-    ///
-    virtual void allocate();
-
     /// size
     ///
     /// @return the number of entries in the page table
     ///
     virtual uint64_t size() const;
 
-    /// Page Copy Constructor
-    ///
-    page_table(const page_table &other);
+protected:
 
-    /// Page Equal Operator
+    /// The physical addresses of the tables themselves
     ///
-    void operator=(const page &other);
+    void *m_phys_table;
 
-private:
-    page m_mem;
+    /// The virtual address of the page table 
+    /// 
+    void *m_virt_table;
+
+    /// Entry size
+    ///
     uint64_t m_size;
 
+    /// Address mask of this page table level
+    ///
     uint64_t m_page_table_mask;
 
-    bool m_allocated;
+    /// Shift of the page table level
+    ///
+    uint32_t m_page_table_shift;
 };
 
 #endif
