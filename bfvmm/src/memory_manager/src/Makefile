@@ -60,6 +60,7 @@ CROSS_OUTDIR:=../../../bin
 ################################################################################
 
 SOURCES+=memory_manager.cpp
+SOURCES+=x64_paging/page_table_x64.cpp
 HEADERS=
 
 INCLUDE_PATHS+=./
