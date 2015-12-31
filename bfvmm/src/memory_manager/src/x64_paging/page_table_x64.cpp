@@ -21,28 +21,17 @@
 
 #include <memory_manager/x64_paging/page_table_x64.h>
 
-page_table_x64::page_table_x64(memory_manager *memory_manager) : m_memory_manager(memory_manager)
+page_table_x64::page_table_x64()
 {
     uint16_t entry = 0;
 
     // Allocate the top level page table
-    m_memory_manager->alloc_page(&m_pml4);
+    m_pml4 = (uint64_t*)mm()->malloc_aligned(4096, 4096);
 
-    // Allocate the sparse arrays for the 
-    // next level page tables
-    m_memory_manager->alloc_page(&m_pdp_ptrs);
-    m_memory_manager->alloc_page(&m_pgd_ptrs);
-    m_memory_manager->alloc_page(&m_pt_ptrs);
 
-    uint64_t *pdp = (uint64_t *)(m_pdp_ptrs.virt_addr());
-    uint64_t *pgd = (uint64_t *)(m_pgd_ptrs.virt_addr());
-    uint64_t *pt = (uint64_t *)(m_pt_ptrs.virt_addr());
-
-    for(entry = 0; entry < PAGE_X64_LIMIT; entry++)
+    for(int entry = 0; entry < PAGE_X64_LIMIT; entry++)
     {
-        pdp[entry] = 0x00;
-        pgd[entry] = 0x00;
-        pt[entry] = 0x00;
+        m_pml4[entry] = 0x00;
     }
 }
 
@@ -74,211 +63,98 @@ bool page_table_x64::remove_entry(void *virtual_address)
 	return false;
 }
 
+uint64_t *page_table_x64::pml4()
+{
+    return m_pml4;
+}
+
+uint64_t *page_table_x64::pdp(void *virtual_address)
+{
+    uint64_t pml4_entry = (uint64_t)pml4()[PML4_OFFSET(virtual_address)];
+
+    pml4_entry &= PAGE_FLAG_MASK;
+
+    return (uint64_t*)mm()->phys_to_virt((void*)pml4_entry);
+}
+
+uint64_t *page_table_x64::pgd(void *virtual_address)
+{
+    uint64_t pdp_entry = (uint64_t)pdp(virtual_address)[PDP_OFFSET(virtual_address)];
+
+    pdp_entry &= PAGE_FLAG_MASK;
+
+    return (uint64_t*)mm()->phys_to_virt((void*)pdp_entry);
+}
+
+uint64_t *page_table_x64::pt(void *virtual_address)
+{
+    uint64_t pgd_entry = (uint64_t)pgd(virtual_address)[PGD_OFFSET(virtual_address)];
+
+    pgd_entry &= PAGE_FLAG_MASK;
+
+    return (uint64_t*)mm()->phys_to_virt((void*)pgd_entry);
+}
+
+bool page_table_x64::add_table_entry_generic(uint64_t *table, void *phys_addr, void *virt_addr, uint16_t offset)
+{
+    if((table[offset] & PAGE_PRESET_FLAG) == 0)
+    {
+        uint64_t *new_table = (uint64_t*)mm()->malloc_aligned(4096, 4096);
+
+        if(new_table == NULL)
+        {
+            return false;
+        }
+
+        table[offset] = (uint64_t)(uint64_t*)mm()->virt_to_phys(new_table);
+        table[offset] |= PAGE_PRESET_FLAG;
+    }
+
+    return true;
+}
+
 bool page_table_x64::add_pml4_entry(void *physical_address, void *virtual_address)
 {
     uint16_t pml4_offset = PML4_OFFSET(virtual_address);
-    uint64_t *pml4 = (uint64_t *)(m_pml4.virt_addr());
-    
+
     if(pml4_offset == PML4_RECURSIVE_ENTRY)
     {
         // Reserved for future recursive mapping implementation
         return false;
     }
 
-    if(pml4[pml4_offset] & PAGE_PRESET_FLAG)
-    {
-        // Okay we have a page already allocated for the page
-        // directory pointer for this address, so just return 
-        // true and let the next level handle the rest
-        return true;
-    }
-    else
-    {
-        // No next page directory pointer (page? ugh) allocated
-        // yet for this address, we need to add one from the 
-        // page pool (non-continuous, because why waste those
-        // precious continuous pages)
-
-        page new_pdp;
-
-        m_memory_manager->alloc_page(&new_pdp);
-        pml4[pml4_offset] = (uint64_t)new_pdp.phys_addr();
-
-        return true;            
-    }
-
+    return add_table_entry_generic(pml4(), physical_address, virtual_address, pml4_offset);
 }
 
 bool page_table_x64::add_pdp_entry(void *physical_address, void *virtual_address)
 {
-    uint16_t pml4_offset = PML4_OFFSET(virtual_address);
     uint16_t pdp_offset = PDP_OFFSET(virtual_address);
     
-    // In order for this function to get called, the PML4
-    // function must have passed, meaning the page for this
-    // PDP to exist.
-    uint64_t *pml4 = (uint64_t *)(m_pml4.virt_addr());
-    uint64_t *pdp = (uint64_t *)(pml4[pml4_offset]);
-    
-    if(pdp_offset == PDP_RECURSIVE_ENTRY)
-    {
-        // Reserved for future recursive mapping implementation
-        return false;
-    }
-
-    if(pdp[pdp_offset] & PAGE_PRESET_FLAG)
-    {
-        // Okay we have a page already allocated for the page
-        // directory pointer for this address, so just return 
-        // true and let the next level handle the rest
-        return true;
-    }
-    else
-    {
-        // No next page directory (page? ugh again) allocated
-        // yet for this address, we need to add one from the 
-        // page pool (non-continuous, because why waste those
-        // precious continuous pages)
-
-        page new_pgd;
-
-        m_memory_manager->alloc_page(&new_pgd);
-        pdp[pdp_offset] = (uint64_t)new_pgd.phys_addr();
-
-        return true;            
-    }
-
+    return add_table_entry_generic(pdp(virtual_address), physical_address, virtual_address, pdp_offset);
 }
 
 bool page_table_x64::add_pgd_entry(void *physical_address, void *virtual_address)
 {
-    uint16_t pml4_offset = PML4_OFFSET(virtual_address);
-    uint16_t pdp_offset = PDP_OFFSET(virtual_address);
     uint16_t pgd_offset = PGD_OFFSET(virtual_address);
-    
-    // In order for this function to get called, the PDP
-    // function must have passed, meaning the page for this
-    // PDP to exist.
-    uint64_t *pml4 = (uint64_t *)(m_pml4.virt_addr());
-    uint64_t *pdp = (uint64_t *)(pml4[pml4_offset]);
-    uint64_t *pgd = (uint64_t *)(pdp[pdp_offset]);
 
-    if(pgd_offset == PDP_RECURSIVE_ENTRY)
-    {
-        // Reserved for future recursive mapping implementation
-        return false;
-    }
-
-    if(pgd[pgd_offset] & PAGE_PRESET_FLAG)
-    {
-        // Okay we have a page already allocated for the page
-        // directory for this address, so just return 
-        // true and let the next level handle the rest
-        return true;
-    }
-    else
-    {
-        // No next page directory (page? ugh again) allocated
-        // yet for this address, we need to add one from the 
-        // page pool (non-continuous, because why waste those
-        // precious continuous pages)
-
-        page new_pt;
-
-        m_memory_manager->alloc_page(&new_pt);
-        pgd[pgd_offset] = (uint64_t)new_pt.phys_addr();
-
-        return true;            
-    }
-
+    return add_table_entry_generic(pgd(virtual_address), physical_address, virtual_address, pgd_offset);
 }
 
 bool page_table_x64::add_pt_entry(void *physical_address, void *virtual_address)
 {
-    uint16_t pml4_offset = PML4_OFFSET(virtual_address);
-    uint16_t pdp_offset = PDP_OFFSET(virtual_address);
-    uint16_t pgd_offset = PGD_OFFSET(virtual_address);
     uint16_t pt_offset = PT_OFFSET(virtual_address);
-    
-    // In order for this function to get called, the PDP
-    // function must have passed, meaning the page for this
-    // PDP to exist.
-    uint64_t *pml4 = (uint64_t *)(m_pml4.virt_addr());
-    uint64_t *pdp = (uint64_t *)(pml4[pml4_offset]);
-    uint64_t *pgd = (uint64_t *)(pdp[pdp_offset]);
-    uint64_t *pt = (uint64_t *)(pgd[pt_offset]);
 
-    if(pt_offset == PDP_RECURSIVE_ENTRY)
-    {
-        // Reserved for future recursive mapping implementation
-        return false;
-    }
-
-    if(pt[pt_offset] & PAGE_PRESET_FLAG)
-    {
-        // Okay we have a page already allocated for the page
-        // table for this address, so we should mark the old
-        // page as now free... where do we keep this bitmap?g
-        pt[pt_offset] = (uint64_t)physical_address;
-
-        return true;
-    }
-    else
-    {
-        pt[pt_offset] = (uint64_t)physical_address;
-        return true;            
-    }
-
+    return add_table_entry_generic(pt(virtual_address), physical_address, virtual_address, pt_offset);
 }
 
 bool page_table_x64::add_entry_to_table(void *physical_address, void *virtual_address, uint8_t order)
 {
     bool rc = false;
 
-    switch(order)
-    {
-        case PML4_PT_ORDER:
-        {
-            rc = add_pml4_entry(physical_address, virtual_address);
-            // Intentional fallthrough
-        }
-        case PDP_PT_ORDER:
-        {
-            if(rc == false)
-            {
-                return rc;
-            }
+    rc = add_pml4_entry(physical_address, virtual_address);
+    rc &= add_pdp_entry(physical_address, virtual_address);
+    rc &= add_pgd_entry(physical_address, virtual_address);
+    rc &= add_pt_entry(physical_address, virtual_address);
 
-            rc = add_pdp_entry(physical_address, virtual_address);
-            // Intentional fallthrough
-        }
-        case PGD_PT_ORDER:
-        {
-            if(rc == false)
-            {
-                return rc;
-            }
-            
-            rc = add_pgd_entry(physical_address, virtual_address);
-            // Intentional fallthrough
-        }
-        case PT_PT_ORDER:
-        {
-            if(rc == false)
-            {
-                return rc;
-            }
-
-            rc = add_pt_entry(physical_address, virtual_address);
-
-            return rc;
-            break;
-        }
-        default:
-        {
-            // What? only 0-3 are valid
-            return false;
-            break;
-        }
-    }
+    return rc;
 }
