@@ -36,28 +36,36 @@
 #define PAGE_RESERVED_FLAG          (1<<6)
 #define PAGE_SIZE_FLAG              (1<<7)
 
+#define PAGE_FLAGS  ((uint64_t)(PAGE_PRESET_FLAG | \
+                    PAGE_RW_FLAG |  \
+                    PAGE_USERSPACE_FLAG | \
+                    PAGE_WRITE_THROUGH_FLAG | \
+                    PAGE_CACHE_DISABLED_FLAG | \
+                    PAGE_ACCESSED_FLAG | \
+                    PAGE_RESERVED_FLAG | \
+                    PAGE_SIZE_FLAG))
+
+#define PAGE_FLAG_MASK ((uint64_t)(~(PAGE_FLAGS)))
+
 #define X64_PAGE_ENTRY_ORDER (9)
 #define PAGE_X64_LIMIT (1<<X64_PAGE_ENTRY_ORDER)
 
-#define PML4_MASK       (0xFF80000000000000)
-#define PML4_SHIFT      (55)
+#define PML4_MASK       ((uint64_t)0xFF80000000000000)
+#define PML4_SHIFT      ((uint64_t)55)
 #define PML4_OFFSET(x)     (((uint64_t)x & PML4_MASK) >> PML4_SHIFT)
 #define PML4_RECURSIVE_ENTRY    (PAGE_X64_LIMIT - 1)
 
 #define PDP_MASK        (PML4_MASK >> X64_PAGE_ENTRY_ORDER)
 #define PDP_SHIFT       (PML4_SHIFT - X64_PAGE_ENTRY_ORDER)
-#define PDP_OFFSET(x)   (((uint64_t)x&PDP_MASK)>>PDP_SHIFT)
-#define PDP_RECURSIVE_ENTRY (PAGE_X64_LIMIT - 1)
+#define PDP_OFFSET(x)   (((uint64_t)x & PDP_MASK)>>PDP_SHIFT)
 
 #define PGD_MASK        (PDP_MASK >> X64_PAGE_ENTRY_ORDER)
 #define PGD_SHIFT       (PDP_SHIFT - X64_PAGE_ENTRY_ORDER)
 #define PGD_OFFSET(x)   (((uint64_t)x & PGD_MASK) >> PGD_SHIFT)
-#define PGD_RECURSIVE_ENTRY (PAGE_X64_LIMIT - 1)
 
 #define PT_MASK        (PGD_MASK >> X64_PAGE_ENTRY_ORDER)
 #define PT_SHIFT       (PGD_SHIFT - X64_PAGE_ENTRY_ORDER)
 #define PT_OFFSET(x)   (((uint64_t)x & PT_MASK) >> PT_SHIFT)
-#define PT_RECURSIVE_ENTRY (PAGE_X64_LIMIT - 1)
 
 #define PML4_PT_ORDER   0
 #define PDP_PT_ORDER    1
@@ -88,7 +96,7 @@ public:
     ///
     /// Creates an empty, invalid page
     ///
-    page_table_x64(memory_manager *memory_manager);
+    page_table_x64();
 
     /// Page Destructor
     ///
@@ -108,6 +116,32 @@ public:
 
 private:
 
+    // @return the virtual address of the pml4 table
+    uint64_t *pml4();
+
+    // Get the pdp table
+    // 
+    // @param virtual_address to look up the pdp table
+    // @return the virtual address of the pdp table for the given
+    // virtual address
+    uint64_t *pdp(void *virtual_address);
+
+    // Get the pgd table
+    // 
+    // @param virtual_address The address to look up the pgd table
+    // @return the virtual address of the pgd table for the given
+    // virtual address
+    uint64_t *pgd(void *virtual_address);
+
+    // Get the pgd table
+    // 
+    // @param virtual_address The address to look up the PT table
+    // @return the virtual address of the PT table for the given
+    // virtual address
+    uint64_t *pt(void *virtual_address);
+
+    bool add_table_entry_generic(uint64_t *table, void *phys_addr, void *virt_addr, uint16_t offset);
+
     bool add_pml4_entry(void *physical_address, void *virtual_address);
 
     bool add_pdp_entry(void *physical_address, void *virtual_address);
@@ -126,16 +160,8 @@ private:
     //              3 - Quaternary page table (x64 it's the page table (pt))
     bool add_entry_to_table(void *physical_address, void *virtual_address, uint8_t order);
 
-    memory_manager *m_memory_manager;
-
     // This is the PML4 storage (Top level page table)
-    page m_pml4;
-
-    // These are sparse storage arrays to the actual
-    // page tables for each level
-    page m_pdp_ptrs;
-    page m_pgd_ptrs;
-    page m_pt_ptrs;
+    uint64_t *m_pml4;
 };
 
 #endif
