@@ -57,8 +57,56 @@ memory_manager_ut::list()
     return true;
 }
 
+#include <test_page_table_x64.h>
+
+page_table_x64_ut::page_table_x64_ut()
+{
+
+}
+
+bool
+page_table_x64_ut::init()
+{
+   return true;
+}
+
+bool
+page_table_x64_ut::fini()
+{
+   return true;
+}
+
+bool
+page_table_x64_ut::list()
+{
+    this->test_add_non_canonical_address();
+    this->test_add_canonical_address();
+
+    this->test_add_address_pml4_alloc_fail();
+    this->test_add_address_pml4_alloc_success();
+    this->test_add_address_pml4_pdp_alloced();
+    this->test_add_address_pml4_pdp_unalloced();
+
+    this->test_add_address_pdp_alloc_fail();
+    this->test_add_address_pdp_alloc_success();
+    this->test_add_address_pdp_pgd_alloced();
+    this->test_add_address_pdp_pgd_unalloced();
+
+    this->test_add_address_pgd_alloc_fail();
+    this->test_add_address_pgd_alloc_success();
+    this->test_add_address_pgd_pt_alloced();
+    this->test_add_address_pgd_pt_unalloced();
+
+    this->test_add_address_pt_alloc_fail();
+    this->test_add_address_pt_alloc_success();
+    this->test_add_address_alloced();
+    this->test_add_address_unalloced();
+    
+    return true;
+}
+
 int
 main(int argc, char *argv[])
 {
-    return RUN_ALL_TESTS(memory_manager_ut);
+    return RUN_ALL_TESTS(page_table_x64_ut);
 }

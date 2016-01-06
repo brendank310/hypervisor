@@ -204,17 +204,13 @@ memory_manager::block_to_virt(int64_t block)
 void *
 memory_manager::virt_to_phys(void *virt)
 {
-    (void) virt;
-
-    return 0;
+    return virt;
 }
 
 void *
 memory_manager::phys_to_virt(void *phys)
 {
-    (void) phys;
-
-    return 0;
+    return phys;
 }
 
 int64_t

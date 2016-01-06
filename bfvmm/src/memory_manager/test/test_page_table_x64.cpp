@@ -23,40 +23,21 @@
 
 void page_table_x64_ut::test_add_non_canonical_address()
 {
-    memory_manager mm;
-    void *p_pml4 = malloc(4096);
-    void *p_pdp = malloc(4096);
-    void *p_pgd = malloc(4096);
-    void *p_pt = malloc(4096);
+    page_table_x64 *pager = new page_table_x64();
 
-    void *p_page = malloc(4096);
+    void *virt_addr, *phys_addr;
 
-    page pml4((void*)0xdeadbeef00, p_pml4, MAX_PAGES);
-    page pdp((void*)0xdeadbeef01, p_pdp, MAX_PAGES);
-    page pgd((void*)0xdeadbeef02, p_pgd, MAX_PAGES);
-    page pt((void*)0xdeadbeef03, p_pt, MAX_PAGES);
-
-    mm.add_page(pml4);
-    mm.add_page(pdp);
-    mm.add_page(pgd);
-    mm.add_page(pt);
-
-    uint16_t i = 0;
-
-    for(i = 0; i < 32; i++)
+    for(int i = 0; i < 512; i++)
     {
-        void *p_tmp = malloc(4096);
-    
-        page tmp((void*)(0xdeadbeef06+i), p_tmp, MAX_PAGES);
+        virt_addr = phys_addr = g_mm->malloc_aligned(4096, 4096);
+ 
+        std::cout << "Userspace VirtAddr : [" << virt_addr << "]" << std::endl;
 
-        mm.add_page(tmp);
+        pager->add_entry(phys_addr, virt_addr);
+        // g_mm->free(virt_addr);
     }
 
-    page_table_x64 *pager = new page_table_x64(&mm);
-
-    pager->add_entry((void*)0xff8fdeadbeefdead, p_page);
-
-    pager->dump_pml4_table();
+    pager->dump_page_tables(virt_addr);
 }
 
 void page_table_x64_ut::test_add_canonical_address()
