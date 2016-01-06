@@ -246,6 +246,7 @@ memory_manager::virt_to_phys(void *virt)
 void *
 memory_manager::phys_to_virt(void *phys)
 {
+
     auto key = (uintptr_t)phys >> MAX_PAGE_SHIFT;
     const auto &md_iter = m_phys_to_virt_map.find(key);
 

@@ -23,6 +23,7 @@
 #define PAGE_TABLE_H
 
 #include <stdint.h>
+#include <iostream>
 #include <memory.h>
 #include <memory_manager/memory_manager.h>
 #include <memory_manager/x64_paging/page_table.h>
@@ -50,9 +51,11 @@
 #define X64_PAGE_ENTRY_ORDER (9)
 #define PAGE_X64_LIMIT (1<<X64_PAGE_ENTRY_ORDER)
 
-#define PML4_MASK       ((uint64_t)0xFF80000000000000)
-#define PML4_SHIFT      ((uint64_t)55)
-#define PML4_OFFSET(x)     (((uint64_t)x & PML4_MASK) >> PML4_SHIFT)
+#define PT_BASE_MASK ((uint64_t)0x1FF)
+
+#define PML4_SHIFT              (48 - X64_PAGE_ENTRY_ORDER)
+#define PML4_MASK               (PT_BASE_MASK << PML4_SHIFT)
+#define PML4_OFFSET(x)          ((((uint64_t)x) & PML4_MASK) >> PML4_SHIFT)
 #define PML4_RECURSIVE_ENTRY    (PAGE_X64_LIMIT - 1)
 
 #define PDP_MASK        (PML4_MASK >> X64_PAGE_ENTRY_ORDER)
@@ -114,10 +117,26 @@ public:
     ///
     virtual bool remove_entry(void *virtual_address);
 
+    /// Print out the page table for a given level and address
+    ///
+    /// @param virtual_address Address of interest
+    /// @param level Page table level to dump out (0-3 are valid)
+    ///
+    void dump_page_table(void *virtual_address, uint8_t level);
+
+    ///
+    void dump_page_tables(void *virt);
+
 private:
 
     // @return the virtual address of the pml4 table
     uint64_t *pml4();
+
+    // Get the entry in the PML4 table for a given address
+    //
+    // @param virt_addr virtual address of interest
+    // @return Hardware address of the PDP for this virtual address
+    uint64_t pml4_entry(void *virt_addr);
 
     // Get the pdp table
     // 
@@ -125,6 +144,12 @@ private:
     // @return the virtual address of the pdp table for the given
     // virtual address
     uint64_t *pdp(void *virtual_address);
+
+    // Get the entry in the PML4 table for a given address
+    //
+    // @param virt_addr virtual address of interest
+    // @return Hardware address of the PDP for this virtual address
+    uint64_t pdp_entry(void *virt_addr);
 
     // Get the pgd table
     // 
@@ -139,6 +164,8 @@ private:
     // @return the virtual address of the PT table for the given
     // virtual address
     uint64_t *pt(void *virtual_address);
+
+    void scrub_page_table(uint64_t **page_table);
 
     bool add_table_entry_generic(uint64_t *table, void *phys_addr, void *virt_addr, uint16_t offset);
 
