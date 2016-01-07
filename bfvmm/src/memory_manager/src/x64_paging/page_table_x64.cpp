@@ -78,19 +78,19 @@ void page_table_x64::dump_page_table(void *virtual_address, uint8_t level)
         case 2:
         {
             // pml4 (top level)
-            table = pdp(virtual_address);
+            table = pdp(virtual_address, false);
             break;
         }
         case 1:
         {
             // pml4 (top level)
-            table = pgd(virtual_address);
+            table = pgd(virtual_address, false);
             break;
         }
         case 0:
         {
             // pml4 (top level)
-            table = pt(virtual_address);
+            table = pt(virtual_address, false);
             break;
         }
         default:
@@ -112,9 +112,8 @@ void page_table_x64::dump_page_table(void *virtual_address, uint8_t level)
     {
         if(table[entry] != 0)
         {
-            std::cout << "+    ";
-            uint8_t digits = 1;
-
+            std::cout << "|    ";
+            if(entry == 0) std::cout << '\b';
             for(int i = entry; i != 0; i /= 10)
             {
                 std::cout << '\b';
@@ -123,7 +122,6 @@ void page_table_x64::dump_page_table(void *virtual_address, uint8_t level)
             std::cout << std::dec;
             std::cout << entry << " |                 ";
             std::cout << std::hex;
-            digits = 1;
 
             for(uint64_t i = table[entry]; i != 0; i /= 16)
             {
@@ -176,15 +174,15 @@ uint64_t page_table_x64::pml4_entry(void *virt_addr)
     return l_pml4_entry;
 }
 
-uint64_t *page_table_x64::pdp(void *virtual_address)
+uint64_t *page_table_x64::pdp(void *virtual_address, bool alloc)
 {
     uint64_t entry = pml4_entry(virtual_address);
 
-    if((entry & PAGE_PRESET_FLAG) == 0)
+    if((entry & PAGE_PRESET_FLAG) == 0 && alloc)
     {
         uint64_t *new_table = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
 
-        std::cout << "----New pdp phys_addr : " << g_mm->virt_to_phys(new_table) << " virt_addr : " << new_table << std::endl;
+        std::cout << "----New pdp phys_addr : " << g_mm->virt_to_phys(new_table) << " virt_addr : " << new_table << " for: " << virtual_address << std::endl;
 
         if(new_table == NULL)
         {
@@ -213,15 +211,15 @@ uint64_t page_table_x64::pdp_entry(void* virt_addr)
     return l_pdp_entry;
 }
 
-uint64_t *page_table_x64::pgd(void *virtual_address)
+uint64_t *page_table_x64::pgd(void *virtual_address, bool alloc)
 {
     uint64_t entry = pdp_entry(virtual_address);
 
-    if((entry & PAGE_PRESET_FLAG) == 0)
+    if((entry & PAGE_PRESET_FLAG) == 0 && alloc)
     {
         uint64_t *new_table = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
 
-        std::cout << "--------New pgd phys_addr : " << g_mm->virt_to_phys(new_table) << " virt_addr : " << new_table << std::endl;
+        std::cout << "--------New pgd phys_addr : " << g_mm->virt_to_phys(new_table) << " virt_addr : " << new_table <<  " for: " << virtual_address << std::endl;
 
         if(new_table == NULL)
         {
@@ -242,15 +240,22 @@ uint64_t *page_table_x64::pgd(void *virtual_address)
     return (uint64_t*)g_mm->phys_to_virt((void*)entry);
 }
 
-uint64_t *page_table_x64::pt(void *virtual_address)
+uint64_t page_table_x64::pgd_entry(void* virt_addr)
+{
+    uint64_t l_pgd_entry = pgd(virt_addr)[PGD_OFFSET(virt_addr)];
+
+    return l_pgd_entry;
+}
+
+uint64_t *page_table_x64::pt(void *virtual_address, bool alloc)
 {
     uint64_t pgd_entry = pgd(virtual_address)[PGD_OFFSET(virtual_address)];
 
-    if((pgd_entry & PAGE_PRESET_FLAG) == 0)
+    if((pgd_entry & PAGE_PRESET_FLAG) == 0 && alloc)
     {
         uint64_t *new_table = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
 
-        std::cout << "------------New pt phys_addr : " << g_mm->virt_to_phys(new_table) << " virt_addr : " << new_table << std::endl;
+        std::cout << "------------New pt phys_addr : " << g_mm->virt_to_phys(new_table) << " virt_addr : " << new_table << " for: " << virtual_address << std::endl;
 
         if(new_table == NULL)
         {
@@ -274,7 +279,7 @@ bool page_table_x64::add_table_entry_generic(uint64_t *table, void *phys_addr, v
 {
     table[offset] = (uint64_t)phys_addr;
     table[offset] |= PAGE_PRESET_FLAG;;
-    
+
     return true;
 }
 
@@ -303,6 +308,8 @@ bool page_table_x64::add_entry_to_table(void *physical_address, void *virtual_ad
 {
     bool rc = false;
 
+    if(virtual_address == 0) std::cout << "Someone is trying to map provide a mapping to the NULL pointer" << std::endl;
+    
     rc = add_pt_entry(physical_address, virtual_address);
 
     return rc;

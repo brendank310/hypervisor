@@ -127,8 +127,6 @@ public:
     ///
     void dump_page_tables(void *virt);
 
-private:
-
     // @return the virtual address of the pml4 table
     uint64_t *pml4();
 
@@ -139,31 +137,39 @@ private:
     uint64_t pml4_entry(void *virt_addr);
 
     // Get the pdp table
-    // 
+    //
     // @param virtual_address to look up the pdp table
     // @return the virtual address of the pdp table for the given
     // virtual address
-    uint64_t *pdp(void *virtual_address);
+    uint64_t *pdp(void *virtual_address, bool alloc = true);
 
-    // Get the entry in the PML4 table for a given address
+    // Get the entry in the PDP table for a given address
     //
     // @param virt_addr virtual address of interest
     // @return Hardware address of the PDP for this virtual address
     uint64_t pdp_entry(void *virt_addr);
 
     // Get the pgd table
-    // 
+    //
     // @param virtual_address The address to look up the pgd table
     // @return the virtual address of the pgd table for the given
     // virtual address
-    uint64_t *pgd(void *virtual_address);
+    uint64_t *pgd(void *virtual_address, bool alloc = true);
+
+    // Get the entry in the PGD table for a given address
+    //
+    // @param virt_addr virtual address of interest
+    // @return Hardware address of the PGD for this virtual address
+    uint64_t pgd_entry(void *virt_addr);
 
     // Get the pgd table
-    // 
+    //
     // @param virtual_address The address to look up the PT table
     // @return the virtual address of the PT table for the given
     // virtual address
-    uint64_t *pt(void *virtual_address);
+    uint64_t *pt(void *virtual_address, bool alloc = true);
+
+private:
 
     void scrub_page_table(uint64_t **page_table);
 
