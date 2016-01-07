@@ -23,21 +23,26 @@
 
 void page_table_x64_ut::test_add_non_canonical_address()
 {
-    page_table_x64 *pager = new page_table_x64();
+    page_table_x64 pager;
 
     void *virt_addr, *phys_addr;
+    void *virt_addr_old = 0;
 
-    for(int i = 0; i < 512; i++)
+    for(int i = 0; i < 513; i++)
     {
         virt_addr = phys_addr = g_mm->malloc_aligned(4096, 4096);
- 
-        std::cout << "Userspace VirtAddr : [" << virt_addr << "]" << std::endl;
 
-        pager->add_entry(phys_addr, virt_addr);
+        pager.add_entry(phys_addr, virt_addr);
+        if(virt_addr_old != 0 && pager.pgd_entry(virt_addr_old) != pager.pgd_entry(virt_addr))
+        {
+            pager.dump_page_tables(virt_addr_old);
+        }
+
+        virt_addr_old = virt_addr;
         // g_mm->free(virt_addr);
     }
 
-    pager->dump_page_tables(virt_addr);
+    pager.dump_page_tables(virt_addr);
 }
 
 void page_table_x64_ut::test_add_canonical_address()
@@ -55,6 +60,17 @@ void page_table_x64_ut::test_add_address_pml4_alloc_success()
 
 }
 
+void page_table_x64_ut::test_add_address_pml4_pdp_alloced()
+{
+
+}
+
+void page_table_x64_ut::test_add_address_pml4_pdp_unalloced()
+{
+
+}
+
+
 void page_table_x64_ut::test_add_address_pdp_alloc_fail()
 {
 
@@ -64,6 +80,17 @@ void page_table_x64_ut::test_add_address_pdp_alloc_success()
 {
 
 }
+
+void page_table_x64_ut::test_add_address_pdp_pgd_alloced()
+{
+
+}
+
+void page_table_x64_ut::test_add_address_pdp_pgd_unalloced()
+{
+
+}
+
 
 void page_table_x64_ut::test_add_address_pgd_alloc_fail()
 {
@@ -75,6 +102,17 @@ void page_table_x64_ut::test_add_address_pgd_alloc_success()
 
 }
 
+void page_table_x64_ut::test_add_address_pgd_pt_alloced()
+{
+
+}
+
+void page_table_x64_ut::test_add_address_pgd_pt_unalloced()
+{
+
+}
+
+
 void page_table_x64_ut::test_add_address_pt_alloc_fail()
 {
 
@@ -85,3 +123,12 @@ void page_table_x64_ut::test_add_address_pt_alloc_success()
 
 }
 
+void page_table_x64_ut::test_add_address_alloced()
+{
+
+}
+
+void page_table_x64_ut::test_add_address_unalloced()
+{
+
+}
