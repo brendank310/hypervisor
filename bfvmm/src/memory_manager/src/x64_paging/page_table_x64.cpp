@@ -21,13 +21,8 @@
 
 #include <memory_manager/x64_paging/page_table_x64.h>
 
-
-#define TRACE() std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl
-
 page_table_x64::page_table_x64()
 {
-    uint16_t entry = 0;
-
     // Allocate the top level page table
     m_pml4 = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
 
@@ -36,17 +31,16 @@ page_table_x64::page_table_x64()
 
 page_table_x64::~page_table_x64()
 {
-	// Cleanup the page tables? if this were a proper 
-	// object I might be inclined to agree, but this is
-	// a controller
+    // Cleanup the page tables? if this were a proper 
+    // object I might be inclined to agree, but this is
+    // a controller
 }
 
 bool page_table_x64::add_entry(void *physical_address, void *virtual_address)
 {
-    uint8_t order = 0;
     bool rc = true;
 
-    rc = add_entry_to_table(physical_address, virtual_address, order);
+    rc = add_entry_to_table(physical_address, virtual_address);
 
     if(rc == false)
     {
@@ -59,7 +53,8 @@ bool page_table_x64::add_entry(void *physical_address, void *virtual_address)
 
 bool page_table_x64::remove_entry(void *virtual_address)
 {
-	return false;
+    (void)virtual_address;
+    return false;
 }
 
 void page_table_x64::dump_page_table(void *virtual_address, uint8_t level)
@@ -106,50 +101,101 @@ void page_table_x64::dump_page_table(void *virtual_address, uint8_t level)
         return;
     }
 
-    std::cout << "+-----+--------------------+" << std::endl;
     std::cout << std::hex; 
     for(entry = 0; entry < PAGE_X64_LIMIT; entry++)
     {
         if(table[entry] != 0)
         {
-            std::cout << "|    ";
-            if(entry == 0) std::cout << '\b';
-            for(int i = entry; i != 0; i /= 10)
+            switch(level)
             {
-                std::cout << '\b';
+                case 3:
+                    std::cout << std::endl << "+-----+--------------------+" << std::endl;
+                    break;
+                case 2:
+                    std::cout << std::endl << "                           " << "+-----+--------------------+" << std::endl << "                           ";
+                    break;
+                case 1:
+                    std::cout << std::endl << "                           " << "                           " << "+-----+--------------------+" << std::endl << "                           " << "                           ";
+                    break;
+                case 0:
+                    std::cout << std::endl << "                           " << "                           " << "                           ";
+                    break;
             }
 
-            std::cout << std::dec;
-            std::cout << entry << " |                 ";
-            std::cout << std::hex;
+            print_pte(entry, table[entry]);
 
-            for(uint64_t i = table[entry]; i != 0; i /= 16)
+            if((table[entry] & PAGE_PRESET_FLAG) && level != 0)
             {
-                std::cout << '\b';
+                std::cout << std::endl;
+                switch(level)
+                {
+                    case 3:
+                        break;
+                    case 2:
+                        std::cout << "                           ";
+                        break;
+                    case 1:
+                        std::cout << "                           " << "                           ";
+                        break;
+                    case 0:
+                        std::cout << "                           " << "                           " << "                           ";
+                        break;
+                }
+
+                std::cout << "+-----+--------------------+";
+                dump_page_table(virtual_address, level-1);
+            }
+            else if(level != 0)
+            {
+                std::cout << std::endl;
             }
 
-            std::cout << "0x" << table[entry] << " | " << std::endl;
+            switch(level)
+            {
+                case 3:
+                    break;
+                case 2:
+                    std::cout << "                            ";
+                    break;
+                case 1:
+                    std::cout  << "                            " << "                            ";
+                    break;
+                case 0:
+                    break;
+            }
         }
     }
-    std::cout << "+-----+--------------------+" << std::endl;
-    std::cout << std::dec; 
 
+    if(level == 0)
+    {
+        std::cout << std::dec << std::endl;
+    }
+}
+
+void page_table_x64::print_pte(uint64_t index, uint64_t entry)
+{
+    std::cout << "|    ";
+    if(index == 0) std::cout << '\b';
+    for(int i = index; i != 0; i /= 10)
+    {
+        std::cout << '\b';
+    }
+
+    std::cout << std::dec;
+    std::cout << index << " |                 ";
+    std::cout << std::hex;
+
+    for(uint64_t i = entry; i != 0; i /= 16)
+    {
+        std::cout << '\b';
+    }
+
+    std::cout << "0x" << entry << " |";
 }
 
 void page_table_x64::dump_page_tables(void *virt)
 {
-    std::cout << "+--------------------------+" << std::endl;
-    std::cout << "| PML4                     |" << std::endl;
     this->dump_page_table(virt, 3);
-    std::cout << "+--------------------------+" << std::endl;
-    std::cout << "| PDP                      |" << std::endl;    
-    this->dump_page_table(virt, 2);
-    std::cout << "+--------------------------+" << std::endl;
-    std::cout << "| PGD                      |" << std::endl; 
-    this->dump_page_table(virt, 1);
-    std::cout << "+--------------------------+" << std::endl;
-    std::cout << "| PT                       |" << std::endl; 
-    this->dump_page_table(virt, 0);
 }
 
 void page_table_x64::scrub_page_table(uint64_t **page_table)
@@ -182,16 +228,12 @@ uint64_t *page_table_x64::pdp(void *virtual_address, bool alloc)
     {
         uint64_t *new_table = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
 
-        std::cout << "----New pdp phys_addr : " << g_mm->virt_to_phys(new_table) << " virt_addr : " << new_table << " for: " << virtual_address << std::endl;
-
         if(new_table == NULL)
         {
-            return false;
+            return NULL;
         }
 
         scrub_page_table(&new_table);
-
-        uint64_t *p_entry = (uint64_t *)entry;
 
         pml4()[PML4_OFFSET(virtual_address)] = (uint64_t)g_mm->virt_to_phys(new_table);
         pml4()[PML4_OFFSET(virtual_address)] |= PAGE_PRESET_FLAG;
@@ -219,13 +261,10 @@ uint64_t *page_table_x64::pgd(void *virtual_address, bool alloc)
     {
         uint64_t *new_table = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
 
-        std::cout << "--------New pgd phys_addr : " << g_mm->virt_to_phys(new_table) << " virt_addr : " << new_table <<  " for: " << virtual_address << std::endl;
-
         if(new_table == NULL)
         {
-            return false;
+            return NULL;
         }
-
 
         scrub_page_table(&new_table);
 
@@ -255,11 +294,9 @@ uint64_t *page_table_x64::pt(void *virtual_address, bool alloc)
     {
         uint64_t *new_table = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
 
-        std::cout << "------------New pt phys_addr : " << g_mm->virt_to_phys(new_table) << " virt_addr : " << new_table << " for: " << virtual_address << std::endl;
-
         if(new_table == NULL)
         {
-            return false;
+            return NULL;
         }
 
         scrub_page_table(&new_table);
@@ -275,7 +312,7 @@ uint64_t *page_table_x64::pt(void *virtual_address, bool alloc)
     return (uint64_t*)g_mm->phys_to_virt((void*)pgd_entry);
 }
 
-bool page_table_x64::add_table_entry_generic(uint64_t *table, void *phys_addr, void *virt_addr, uint16_t offset)
+bool page_table_x64::add_table_entry_generic(uint64_t *table, void *phys_addr, uint16_t offset)
 {
     table[offset] = (uint64_t)phys_addr;
     table[offset] |= PAGE_PRESET_FLAG;;
@@ -287,24 +324,24 @@ bool page_table_x64::add_pdp_entry(void *physical_address, void *virtual_address
 {
     uint16_t pdp_offset = PDP_OFFSET(virtual_address);
 
-    return add_table_entry_generic(pdp(virtual_address), physical_address, virtual_address, pdp_offset);
+    return add_table_entry_generic(pdp(virtual_address), physical_address, pdp_offset);
 }
 
 bool page_table_x64::add_pgd_entry(void *physical_address, void *virtual_address)
 {
     uint16_t pgd_offset = PGD_OFFSET(virtual_address);
 
-    return add_table_entry_generic(pgd(virtual_address), physical_address, virtual_address, pgd_offset);
+    return add_table_entry_generic(pgd(virtual_address), physical_address, pgd_offset);
 }
 
 bool page_table_x64::add_pt_entry(void *physical_address, void *virtual_address)
 {
     uint16_t pt_offset = PT_OFFSET(virtual_address);
 
-    return add_table_entry_generic(pt(virtual_address), physical_address, virtual_address, pt_offset);
+    return add_table_entry_generic(pt(virtual_address), physical_address, pt_offset);
 }
 
-bool page_table_x64::add_entry_to_table(void *physical_address, void *virtual_address, uint8_t order)
+bool page_table_x64::add_entry_to_table(void *physical_address, void *virtual_address)
 {
     bool rc = false;
 
