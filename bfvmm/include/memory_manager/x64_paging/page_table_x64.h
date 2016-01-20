@@ -124,6 +124,8 @@ public:
     ///
     void dump_page_table(void *virtual_address, uint8_t level);
 
+    void print_pte(uint64_t index, uint64_t entry);
+
     ///
     void dump_page_tables(void *virt);
 
@@ -173,7 +175,7 @@ private:
 
     void scrub_page_table(uint64_t **page_table);
 
-    bool add_table_entry_generic(uint64_t *table, void *phys_addr, void *virt_addr, uint16_t offset);
+    bool add_table_entry_generic(uint64_t *table, void *phys_addr, uint16_t offset);
 
     bool add_pml4_entry(void *physical_address, void *virtual_address);
 
@@ -191,7 +193,7 @@ private:
     //              1 - Secondary page table (x64 it's the page directory pointer (pdp))
     //              2 - Tertiary page table (x64 it's the page diretory (pgd))
     //              3 - Quaternary page table (x64 it's the page table (pt))
-    bool add_entry_to_table(void *physical_address, void *virtual_address, uint8_t order);
+    bool add_entry_to_table(void *physical_address, void *virtual_address);
 
     // This is the PML4 storage (Top level page table)
     uint64_t *m_pml4;
