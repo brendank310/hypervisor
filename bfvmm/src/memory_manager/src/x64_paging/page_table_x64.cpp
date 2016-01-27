@@ -19,6 +19,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <memory_manager/memory_manager.h>
 #include <memory_manager/x64_paging/page_table_x64.h>
 
 page_table_x64::page_table_x64()
