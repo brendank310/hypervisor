@@ -27,6 +27,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <memory.h>
+#include <memory_manager/x64_paging/page_table_x64.h>
 
 class memory_manager
 {
@@ -172,6 +173,8 @@ private:
 
     std::map<uintptr_t, struct memory_descriptor> m_virt_to_phys_map;
     std::map<uintptr_t, struct memory_descriptor> m_phys_to_virt_map;
+
+    page_table_x64 pager;
 };
 
 /// Memory Manager Macro

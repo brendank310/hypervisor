@@ -22,10 +22,7 @@
 #ifndef PAGE_TABLE_H
 #define PAGE_TABLE_H
 
-#include <stdint.h>
 #include <iostream>
-#include <memory.h>
-#include <memory_manager/memory_manager.h>
 #include <memory_manager/x64_paging/page_table.h>
 
 #define PAGE_PRESET_FLAG            (1<<0)
