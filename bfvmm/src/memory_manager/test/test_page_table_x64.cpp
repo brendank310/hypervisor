@@ -30,19 +30,19 @@ void page_table_x64_ut::test_add_non_canonical_address()
 
     for(int i = 0; i < 513; i++)
     {
-        virt_addr = phys_addr = g_mm->malloc_aligned(4096, 4096);
+        //virt_addr = phys_addr = g_mm->malloc_aligned(4096, 4096);
 
-        pager.add_entry(phys_addr, virt_addr);
-        if(virt_addr_old != 0 && pager.pgd_entry(virt_addr_old) != pager.pgd_entry(virt_addr))
-        {
-            pager.dump_page_tables(virt_addr_old);
-        }
+        //pager.add_entry(phys_addr, virt_addr);
+        //if(virt_addr_old != 0 && pager.pgd_entry(virt_addr_old) != pager.pgd_entry(virt_addr))
+        //{
+        //    pager.dump_page_tables(virt_addr_old);
+        //}
 
-        virt_addr_old = virt_addr;
+        //virt_addr_old = virt_addr;
         // g_mm->free(virt_addr);
     }
 
-    pager.dump_page_tables(virt_addr);
+    //pager.dump_page_tables(virt_addr);
 }
 
 void page_table_x64_ut::test_add_canonical_address()

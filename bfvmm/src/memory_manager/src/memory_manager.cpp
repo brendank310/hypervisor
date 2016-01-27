@@ -309,6 +309,12 @@ memory_manager::add_mdl(struct memory_descriptor *mdl, int64_t num)
         m_virt_to_phys_map[(uintptr_t)md.virt >> MAX_PAGE_SHIFT] = md;
         m_phys_to_virt_map[(uintptr_t)md.phys >> MAX_PAGE_SHIFT] = md;
 
+    }
+
+    for (auto i = 0; i < num; i++)
+    {
+        const auto &md = mdl[i];
+
         pager.add_entry(md.phys, md.virt);
     }
 
