@@ -53,6 +53,8 @@ vcpu_manager::start(int64_t vcpuid)
     if (!vc)
         return vcpu_manager_error::invalid;
 
+    std::cout << "test before vcpu->start\n";
+
     if (vc->start() != vcpu_error::success)
         return vcpu_manager_error::failure;
 

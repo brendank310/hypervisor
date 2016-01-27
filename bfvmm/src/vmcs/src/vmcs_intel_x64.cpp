@@ -23,7 +23,7 @@
 #include <iostream>
 
 #include <vmcs/vmcs_intel_x64.h>
-// #include <exit_handler/exit_handler.h>
+#include <exit_handler/exit_handler.h>
 
 // =============================================================================
 //  Helper Structs
@@ -300,34 +300,25 @@ vmcs_intel_x64::save_state()
 vmcs_error::type
 vmcs_intel_x64::create_vmcs_region()
 {
-    // if (m_memory_manager->alloc_page(&m_vmcs_region) != memory_manager_error::success)
-    // {
-    //     std::cout << "create_vmcs_region failed: "
-    //               << "out of memory" << std::endl;
-    //     return vmcs_error::out_of_memory;
-    // }
+    m_vmcs_region = new char[4096];
 
-    // if (m_vmcs_region.size() < vmcs_region_size())
-    // {
-    //     std::cout << "create_vmcs_region failed: "
-    //               << "the allocated page is not large enough:" << std::endl
-    //               << "    - page size: " << m_vmcs_region.size() << " "
-    //               << "    - vmxon/vmcs region size: " << vmcs_region_size()
-    //               << std::endl;
-    //     return vmcs_error::not_supported;
-    // }
+    if (!m_vmcs_region)
+    {
+         std::cout << "create_vmcs_region failed: "
+                   << "out of memory" << std::endl;
+         return vmcs_error::out_of_memory;
+    }
 
-    // if (((uintptr_t)m_vmcs_region.phys_addr() & 0x0000000000000FFF) != 0)
-    // {
-    //     std::cout << "create_vmcs_region failed: "
-    //               << "the allocated page is not page aligned:" << std::endl
-    //               << "    - page phys: " << m_vmcs_region.phys_addr()
-    //               << std::endl;
-    //     return vmcs_error::not_supported;
-    // }
+    if ((((uintptr_t)memory_manager::instance()->virt_to_phys(m_vmcs_region)) & 0x0000000000000FFF) != 0)
+    {
+         std::cout << "create_vmcs_region failed: "
+                   << "the allocated page is not page aligned:" << std::endl
+                   << "    - page phys: " << memory_manager::instance()->virt_to_phys(m_vmcs_region)
+                   << std::endl;
+         return vmcs_error::not_supported;
+    }
 
-    // auto buf = (char *)m_vmcs_region.virt_addr();
-    // auto reg = (vmcs_region *)m_vmcs_region.virt_addr();
+    auto reg = (vmcs_region *)m_vmcs_region;
 
     // // The information regading this MSR can be found in appendix A.1. For
     // // the VMX capabilities check, we need the following:
@@ -336,10 +327,10 @@ vmcs_intel_x64::create_vmcs_region()
     // //   processor. Processors that use the same VMCS revision identifier use
     // //   the same size for VMCS regions (see subsequent item on bits 44:32)
 
-    // for (auto i = 0; i < m_vmcs_region.size(); i++)
-    //     buf[i] = 0;
+    for (auto i = 0; i < vmcs_region_size(); i++)
+         m_vmcs_region[i] = 0;
 
-    // reg->revision_id = (m_intrinsics->read_msr(IA32_VMX_BASIC_MSR) & 0x7FFFFFFFF);
+    reg->revision_id = (m_intrinsics->read_msr(IA32_VMX_BASIC_MSR) & 0x7FFFFFFFF);
 
     return vmcs_error::success;
 }
@@ -347,7 +338,7 @@ vmcs_intel_x64::create_vmcs_region()
 vmcs_error::type
 vmcs_intel_x64::release_vmxon_region()
 {
-    // m_memory_manager->free_page(m_vmcs_region);
+    delete m_vmcs_region;
 
     return vmcs_error::success;
 }
@@ -355,19 +346,19 @@ vmcs_intel_x64::release_vmxon_region()
 vmcs_error::type
 vmcs_intel_x64::clear_vmcs_region()
 {
-    // auto phys = m_vmcs_region.phys_addr();
+    auto phys = memory_manager::instance()->virt_to_phys(m_vmcs_region);
 
-    // // For some reason, the VMCLEAR instruction takes the address of a memory
-    // // location that has the address of the VMCS region, which sadly is not
-    // // well documented in the Intel manual.
+    // For some reason, the VMCLEAR instruction takes the address of a memory
+    // location that has the address of the VMCS region, which sadly is not
+    // well documented in the Intel manual.
 
-    // if (m_intrinsics->vmclear(&phys) == false)
-    // {
-    //     std::cout << "vmclear failed" << std::endl;
-    //     return vmcs_error::failure;
-    // }
+    if (m_intrinsics->vmclear(&phys) == false)
+    {
+         std::cout << "vmclear failed" << std::endl;
+         return vmcs_error::failure;
+    }
 
-    // m_valid = true;
+    m_valid = true;
 
     return vmcs_error::success;
 }
@@ -375,17 +366,17 @@ vmcs_intel_x64::clear_vmcs_region()
 vmcs_error::type
 vmcs_intel_x64::load_vmcs_region()
 {
-    // auto phys = m_vmcs_region.phys_addr();
+    auto phys = memory_manager::instance()->virt_to_phys(m_vmcs_region);
 
-    // // For some reason, the VMPTRLD instruction takes the address of a memory
-    // // location that has the address of the VMCS region, which sadly is not
-    // // well documented in the Intel manual.
+    // For some reason, the VMPTRLD instruction takes the address of a memory
+    // location that has the address of the VMCS region, which sadly is not
+    // well documented in the Intel manual.
 
-    // if (m_intrinsics->vmptrld(&phys) == false)
-    // {
-    //     std::cout << "vmptrld failed" << std::endl;
-    //     return vmcs_error::failure;
-    // }
+    if (m_intrinsics->vmptrld(&phys) == false)
+    {
+        std::cout << "vmptrld failed" << std::endl;
+        return vmcs_error::failure;
+    }
 
     return vmcs_error::success;
 }
@@ -679,8 +670,8 @@ vmcs_intel_x64::write_natural_width_host_state_fields()
     vmwrite(VMCS_HOST_GDTR_BASE, m_gdt_reg.base);
     vmwrite(VMCS_HOST_IDTR_BASE, m_idt_reg.base);
 
-    // vmwrite(VMCS_HOST_RSP, (uint64_t)exit_handler_stack());
-    // vmwrite(VMCS_HOST_RIP, (uint64_t)exit_handler_entry);
+    vmwrite(VMCS_HOST_RSP, (uint64_t)exit_handler_stack());
+    vmwrite(VMCS_HOST_RIP, (uint64_t)exit_handler_entry);
 
     // unused: VMCS_HOST_FS_BASE
     // unused: VMCS_HOST_GS_BASE

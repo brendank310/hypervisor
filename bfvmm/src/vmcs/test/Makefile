@@ -59,10 +59,12 @@ INCLUDE_PATHS+=../../../../include/
 LIBS+=vmcs
 LIBS+=intrinsics
 LIBS+=exit_handler
+LIBS+=memory_manager
 
 LIBRARY_PATHS+=../bin/native
 LIBRARY_PATHS+=../../intrinsics/bin/native
 LIBRARY_PATHS+=../../exit_handler/bin/native
+LIBRARY_PATHS+=../../memory_manager/bin/native
 
 ################################################################################
 # Environment Specific

@@ -48,7 +48,7 @@ public:
     /// up to the caller to free this vCPU.
     ///
     std::shared_ptr<vcpu> make_vcpu(int64_t vcpuid)
-    { return std::make_shared<vcpu>(vcpuid); }
+        { return std::make_shared<vcpu_intel_x64>(vcpuid); }
 };
 
 #endif

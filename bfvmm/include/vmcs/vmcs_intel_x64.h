@@ -23,7 +23,7 @@
 #define VMCS_INTEL_X64_H
 
 #include <intrinsics/intrinsics_intel_x64.h>
-
+#include <memory_manager/memory_manager.h>
 namespace vmcs_error
 {
     enum type
@@ -340,6 +340,7 @@ private:
     uint64_t m_tr_base;
 
     bool m_valid;
+    char *m_vmcs_region;
 
     intrinsics_intel_x64 *m_intrinsics;
 };

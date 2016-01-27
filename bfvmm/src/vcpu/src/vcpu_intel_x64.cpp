@@ -55,11 +55,12 @@ vcpu_intel_x64::vcpu_intel_x64(int64_t id,
 vcpu_error::type
 vcpu_intel_x64::start()
 {
-    // if (m_vmm.start() != vmm_error::success)
-    //     return vcpu_intel_x64_error::failure;
+    std::cout << "About to start and launch the hypervisor" << std::endl;
+    if (m_vmm->start() != vmm_error::success)
+        return vcpu_error::failure;
 
-    // if (m_vmcs.launch() != vmcs_error::success)
-    //     return vcpu_intel_x64_error::failure;
+    if (m_vmcs->launch() != vmcs_error::success)
+        return vcpu_error::failure;
 
     return vcpu_error::success;
 }
@@ -67,8 +68,8 @@ vcpu_intel_x64::start()
 vcpu_error::type
 vcpu_intel_x64::stop()
 {
-    // if (m_vmm.stop() != vmm_error::success)
-    //     return vcpu_intel_x64_error::failure;
+    if (m_vmm->stop() != vmm_error::success)
+        return vcpu_error::failure;
 
     return vcpu_error::success;
 }
