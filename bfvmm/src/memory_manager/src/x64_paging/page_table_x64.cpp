@@ -22,12 +22,8 @@
 #include <memory_manager/memory_manager.h>
 #include <memory_manager/x64_paging/page_table_x64.h>
 
-page_table_x64::page_table_x64()
+page_table_x64::page_table_x64() : m_pml4(NULL)
 {
-    // Allocate the top level page table
-    m_pml4 = (uint64_t*)memory_manager::instance()->malloc_aligned(4096, 4096);
-
-    scrub_page_table(&m_pml4);
 }
 
 page_table_x64::~page_table_x64()
@@ -40,6 +36,13 @@ page_table_x64::~page_table_x64()
 bool page_table_x64::add_entry(void *physical_address, void *virtual_address)
 {
     bool rc = true;
+
+    // Allocate the top level page table
+    if(!m_pml4)
+        {
+            m_pml4 = (uint64_t*)memory_manager::instance()->malloc_aligned(4096, 4096);
+            scrub_page_table(&m_pml4);
+        }
 
     rc = add_entry_to_table(physical_address, virtual_address);
 

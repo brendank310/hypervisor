@@ -314,9 +314,11 @@ memory_manager::add_mdl(struct memory_descriptor *mdl, int64_t num)
     for (auto i = 0; i < num; i++)
     {
         const auto &md = mdl[i];
-
+        //bferror << md.phys << "<-->" << md.virt << bfendl;
         pager.add_entry(md.phys, md.virt);
     }
+
+    pager.dump_page_tables(mdl[0].virt);
 
     return MEMORY_MANAGER_SUCCESS;
 }
