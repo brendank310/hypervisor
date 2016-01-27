@@ -25,7 +25,7 @@
 page_table_x64::page_table_x64()
 {
     // Allocate the top level page table
-    m_pml4 = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
+    m_pml4 = (uint64_t*)memory_manager::instance()->malloc_aligned(4096, 4096);
 
     scrub_page_table(&m_pml4);
 }
@@ -227,7 +227,7 @@ uint64_t *page_table_x64::pdp(void *virtual_address, bool alloc)
 
     if((entry & PAGE_PRESET_FLAG) == 0 && alloc)
     {
-        uint64_t *new_table = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
+        uint64_t *new_table = (uint64_t*)memory_manager::instance()->malloc_aligned(4096, 4096);
 
         if(new_table == NULL)
         {
@@ -236,7 +236,7 @@ uint64_t *page_table_x64::pdp(void *virtual_address, bool alloc)
 
         scrub_page_table(&new_table);
 
-        pml4()[PML4_OFFSET(virtual_address)] = (uint64_t)g_mm->virt_to_phys(new_table);
+        pml4()[PML4_OFFSET(virtual_address)] = (uint64_t)memory_manager::instance()->virt_to_phys(new_table);
         pml4()[PML4_OFFSET(virtual_address)] |= PAGE_PRESET_FLAG;
 
         return new_table;
@@ -244,7 +244,7 @@ uint64_t *page_table_x64::pdp(void *virtual_address, bool alloc)
 
     entry &= ~PAGE_PRESET_FLAG;
 
-    return (uint64_t*)g_mm->phys_to_virt((void*)entry);
+    return (uint64_t*)memory_manager::instance()->phys_to_virt((void*)entry);
 }
 
 uint64_t page_table_x64::pdp_entry(void* virt_addr)
@@ -260,7 +260,7 @@ uint64_t *page_table_x64::pgd(void *virtual_address, bool alloc)
 
     if((entry & PAGE_PRESET_FLAG) == 0 && alloc)
     {
-        uint64_t *new_table = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
+        uint64_t *new_table = (uint64_t*)memory_manager::instance()->malloc_aligned(4096, 4096);
 
         if(new_table == NULL)
         {
@@ -269,7 +269,7 @@ uint64_t *page_table_x64::pgd(void *virtual_address, bool alloc)
 
         scrub_page_table(&new_table);
 
-        pdp(virtual_address)[PDP_OFFSET(virtual_address)] = (uint64_t)g_mm->virt_to_phys(new_table);
+        pdp(virtual_address)[PDP_OFFSET(virtual_address)] = (uint64_t)memory_manager::instance()->virt_to_phys(new_table);
         pdp(virtual_address)[PDP_OFFSET(virtual_address)] |= PAGE_PRESET_FLAG;
 
         return new_table;
@@ -277,7 +277,7 @@ uint64_t *page_table_x64::pgd(void *virtual_address, bool alloc)
 
     entry &= ~PAGE_PRESET_FLAG;
 
-    return (uint64_t*)g_mm->phys_to_virt((void*)entry);
+    return (uint64_t*)memory_manager::instance()->phys_to_virt((void*)entry);
 }
 
 uint64_t page_table_x64::pgd_entry(void* virt_addr)
@@ -293,7 +293,7 @@ uint64_t *page_table_x64::pt(void *virtual_address, bool alloc)
 
     if((pgd_entry & PAGE_PRESET_FLAG) == 0 && alloc)
     {
-        uint64_t *new_table = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
+        uint64_t *new_table = (uint64_t*)memory_manager::instance()->malloc_aligned(4096, 4096);
 
         if(new_table == NULL)
         {
@@ -302,7 +302,7 @@ uint64_t *page_table_x64::pt(void *virtual_address, bool alloc)
 
         scrub_page_table(&new_table);
 
-        pgd(virtual_address)[PGD_OFFSET(virtual_address)] = (uint64_t)g_mm->virt_to_phys(new_table);
+        pgd(virtual_address)[PGD_OFFSET(virtual_address)] = (uint64_t)memory_manager::instance()->virt_to_phys(new_table);
         pgd(virtual_address)[PGD_OFFSET(virtual_address)] |= PAGE_PRESET_FLAG;
 
         return new_table;
@@ -310,7 +310,7 @@ uint64_t *page_table_x64::pt(void *virtual_address, bool alloc)
 
     pgd_entry &= ~PAGE_PRESET_FLAG;
 
-    return (uint64_t*)g_mm->phys_to_virt((void*)pgd_entry);
+    return (uint64_t*)memory_manager::instance()->phys_to_virt((void*)pgd_entry);
 }
 
 bool page_table_x64::add_table_entry_generic(uint64_t *table, void *phys_addr, uint16_t offset)
