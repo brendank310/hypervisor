@@ -394,10 +394,7 @@ bfelf_file_init(char *file, uint64_t fsize, struct bfelf_file_t *ef)
             ef->num_rel++;
 
             if (ef->num_rel >= BFELF_MAX_RELTAB)
-                {
-                    ALERT("invalid num_rel %d, max is %d\n", ef->num_rel, BFELF_MAX_RELTAB);
-                    return BFELF_ERROR_INVALID_E_SHNUM;
-                }
+                return BFELF_ERROR_LOADER_FULL;
         }
 
         if (shdr->sh_type == bfsht_rela)
@@ -405,11 +402,9 @@ bfelf_file_init(char *file, uint64_t fsize, struct bfelf_file_t *ef)
             ef->bfrelatab[ef->num_rela].num = shdr->sh_size / sizeof(struct bfelf_rela);
             ef->bfrelatab[ef->num_rela].tab = (struct bfelf_rela *)(ef->file + shdr->sh_offset);
             ef->num_rela++;
+
             if (ef->num_rela >= BFELF_MAX_RELTAB)
-                {
-                    ALERT("invalid num_rela %d, max is %d\n", ef->num_rela, BFELF_MAX_RELTAB);
-                    return BFELF_ERROR_INVALID_E_SHNUM;
-                }
+                return BFELF_ERROR_LOADER_FULL;
         }
     }
 
@@ -1164,7 +1159,7 @@ bfelf_symbol_by_name(struct bfelf_file_t *ef,
     if (ef->valid != BFELF_TRUE)
         return BFELF_ERROR_INVALID_FILE;
 
-    //ret = bfelf_symbol_by_hash(ef, name, sym);
+    ret = bfelf_symbol_by_hash(ef, name, sym);
 
     if (ret != BFELF_SUCCESS)
     {
