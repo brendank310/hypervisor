@@ -55,6 +55,12 @@ vcpu::start()
 }
 
 vcpu_error::type
+vcpu::dispatch()
+{
+    return vcpu_error::success;
+}
+
+vcpu_error::type
 vcpu::stop()
 {
     return vcpu_error::success;

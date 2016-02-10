@@ -83,6 +83,14 @@ public:
     ///
     virtual vcpu_error::type start();
 
+    /// Dispatch
+    ///
+    /// Dispatches the exit handler for the vCPU.
+    ///
+    /// @return success on success, failure otherwise
+    ///
+    virtual vcpu_error::type dispatch();
+
     /// Stop
     ///
     /// Stops the vCPU.

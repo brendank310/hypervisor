@@ -20,6 +20,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <iostream>
+#include <vcpu/vcpu_manager.h>
 #include <exit_handler/exit_handler_dispatch.h>
 
 // -----------------------------------------------------------------------------
@@ -29,9 +30,10 @@
 void
 exit_handler_trampoline(void)
 {
-    auto ehd = exit_handler_dispatch();
+    std::cout << "in the trampoline" << std::endl;
 
-    ehd.dispatch();
+    // Hardcode vcpuid to zero for now
+    g_vcm->dispatch(0);
 }
 
 // -----------------------------------------------------------------------------

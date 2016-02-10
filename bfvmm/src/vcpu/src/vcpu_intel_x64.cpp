@@ -30,6 +30,7 @@ vcpu_intel_x64::vcpu_intel_x64(int64_t id) :
     m_intrinsics = new intrinsics_intel_x64();
     m_vmm = new vmm_intel_x64(m_intrinsics);
     m_vmcs = new vmcs_intel_x64(m_intrinsics);
+    m_exit_handler = new exit_handler_dispatch(m_intrinsics);
 }
 
 vcpu_intel_x64::vcpu_intel_x64(int64_t id,
@@ -61,6 +62,16 @@ vcpu_intel_x64::start()
 
     if (m_vmcs->launch() != vmcs_error::success)
         return vcpu_error::failure;
+
+    return vcpu_error::success;
+}
+
+vcpu_error::type
+vcpu_intel_x64::dispatch()
+{
+    std::cout << "About to execute the exit handler dispatch function" << std::endl;
+
+    m_exit_handler->dispatch();
 
     return vcpu_error::success;
 }

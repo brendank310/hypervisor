@@ -210,9 +210,9 @@ vmcs_intel_x64::launch()
     // occured. If the launch succeeds, we should continue execution as
     // normal, not this code will be in a virtual machine when finished.
 
-    // ret = launch_vmcs();
-    // if (ret != vmcs_error::success)
-    //     return ret;
+    ret = launch_vmcs();
+    if (ret != vmcs_error::success)
+         return ret;
 
     return vmcs_error::success;
 }

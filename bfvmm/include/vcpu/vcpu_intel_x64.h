@@ -26,6 +26,7 @@
 
 #include <vmm/vmm_intel_x64.h>
 #include <vmcs/vmcs_intel_x64.h>
+#include <exit_handler/exit_handler_dispatch.h>
 #include <intrinsics/intrinsics_intel_x64.h>
 
 class vcpu_intel_x64 : public vcpu
@@ -64,6 +65,14 @@ public:
     ///
     virtual vcpu_error::type start() override;
 
+    /// Dispatch
+    ///
+    /// Dispatches the exit handler for the vCPU.
+    ///
+    /// @return success on success, failure otherwise
+    ///
+    virtual vcpu_error::type dispatch() override;
+
     /// Stop
     ///
     /// Stops the vCPU.
@@ -76,6 +85,7 @@ private:
 
     vmm_intel_x64 *m_vmm;
     vmcs_intel_x64 *m_vmcs;
+    exit_handler_dispatch *m_exit_handler;
     intrinsics_intel_x64 *m_intrinsics;
 };
 

@@ -68,6 +68,15 @@ public:
     ///
     vcpu_manager_error::type start(int64_t vcpuid);
 
+    /// Dispatch vCPU exit handler
+    ///
+    /// Runs the vCPU's exit handler
+    ///
+    /// @param vcpuid the vcpu to stop
+    /// @return success on success, falure otherwise
+    ///
+    vcpu_manager_error::type dispatch(int64_t vcpuid);
+    
     /// Stop vCPU
     ///
     /// Stops the vCPU.

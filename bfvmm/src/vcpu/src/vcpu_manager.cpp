@@ -62,6 +62,25 @@ vcpu_manager::start(int64_t vcpuid)
 }
 
 vcpu_manager_error::type
+vcpu_manager::dispatch(int64_t vcpuid)
+{
+    if(vcpuid < 0 || vcpuid >= MAX_VCPUS)
+        return vcpu_manager_error::invalid;
+
+    const auto &vc = m_vcpus[vcpuid];
+
+    if(!vc)
+        return vcpu_manager_error::invalid;
+
+    std::cout << "test before calling vcpu contained exit handler\n";
+
+    if (vc->dispatch() != vcpu_error::success)
+        return vcpu_manager_error::failure;
+
+    return vcpu_manager_error::success;
+}
+
+vcpu_manager_error::type
 vcpu_manager::stop(int64_t vcpuid)
 {
     if (vcpuid < 0 || vcpuid >= MAX_VCPUS)
