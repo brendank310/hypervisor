@@ -592,11 +592,17 @@ exit_handler_dispatch::handle_io_instruction()
 
 void
 exit_handler_dispatch::handle_rdmsr()
-{ unimplemented_handler(); }
+{
+    guest_read_msr();
+    advance_rip();
+}
 
 void
 exit_handler_dispatch::handle_wrmsr()
-{ unimplemented_handler(); }
+{
+    guest_write_msr();
+    advance_rip();
+}
 
 void
 exit_handler_dispatch::handle_vm_entry_failure_invalid_guest_state()
@@ -731,7 +737,7 @@ exit_handler_dispatch::unimplemented_handler()
     std::cout << std::dec << std::endl;
 
     spin_wait();
-    m_intrinsics->halt();
+    // m_intrinsics->halt();
 }
 
 const char *

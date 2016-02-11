@@ -69,8 +69,6 @@ vcpu_intel_x64::start()
 vcpu_error::type
 vcpu_intel_x64::dispatch()
 {
-    std::cout << "About to execute the exit handler dispatch function" << std::endl;
-
     m_exit_handler->dispatch();
 
     return vcpu_error::success;

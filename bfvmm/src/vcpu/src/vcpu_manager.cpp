@@ -72,8 +72,6 @@ vcpu_manager::dispatch(int64_t vcpuid)
     if(!vc)
         return vcpu_manager_error::invalid;
 
-    std::cout << "test before calling vcpu contained exit handler\n";
-
     if (vc->dispatch() != vcpu_error::success)
         return vcpu_manager_error::failure;
 

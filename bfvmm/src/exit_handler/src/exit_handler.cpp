@@ -1,3 +1,4 @@
+
 //
 // Bareflank Hypervisor
 //
@@ -30,8 +31,6 @@
 void
 exit_handler_trampoline(void)
 {
-    std::cout << "in the trampoline" << std::endl;
-
     // Hardcode vcpuid to zero for now
     g_vcm->dispatch(0);
 }
