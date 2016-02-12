@@ -579,7 +579,7 @@ unimplemented:
     std::cout << std::dec << std::endl;
 
     spin_wait();
-    // m_intrinsics->halt();
+    m_intrinsics->halt();
 }
 
 void
@@ -594,12 +594,14 @@ void
 exit_handler_dispatch::handle_rdmsr()
 {
     guest_read_msr();
+    std::cout << "rdmsr rcx[" << g_guest_rcx << "] -- rdx[" <<  g_guest_rdx << "] rax [" << g_guest_rax << "]" << std::endl;
     advance_rip();
 }
 
 void
 exit_handler_dispatch::handle_wrmsr()
 {
+    std::cout << "wrmsr rcx[" << g_guest_rcx << "] -- rdx[" <<  g_guest_rdx << "] rax [" << g_guest_rax << "]" << std::endl;
     guest_write_msr();
     advance_rip();
 }

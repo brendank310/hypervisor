@@ -163,17 +163,17 @@ ioctl_start_vmm(void)
         goto failure;
     }
 
-    ret = common_start_vmm();
-    if (ret != BF_SUCCESS)
-    {
-        ALERT("IOCTL_START_VMM: failed to start vmm: %d\n", ret);
-        goto failure;
-    }
-
     g_mmu_context = get_task_mm(current);
     if (!g_mmu_context)
     {
         ALERT("IOCTL_START_VMM: couldn't find a memory context in which to run!\n");
+        goto failure;
+    }
+
+    ret = common_start_vmm();
+    if (ret != BF_SUCCESS)
+    {
+        ALERT("IOCTL_START_VMM: failed to start vmm: %d\n", ret);
         goto failure;
     }
 

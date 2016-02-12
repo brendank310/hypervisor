@@ -165,19 +165,17 @@ vmcs_intel_x64::launch()
     // CLEAN ME UP
     // =========================================================================
 
-    // m_memory_manager->alloc_page(&m_msr_bitmap);
+    char *m_msr_bitmap = new char[4096];
+    for (auto i = 0; i < 4096; i++)
+        m_msr_bitmap[i] = 0;
 
-    // auto buf = (char *)m_msr_bitmap.virt_addr();
-    // for (auto i = 0; i < m_msr_bitmap.size(); i++)
-    //     buf[i] = 0;
+    vmwrite(VMCS_ADDRESS_OF_MSR_BITMAPS_FULL, (uint64_t)g_mm->virt_to_phys(m_msr_bitmap));
 
-    // vmwrite(VMCS_ADDRESS_OF_MSR_BITMAPS_FULL, (uint64_t)m_msr_bitmap.phys_addr());
+    auto controls = vmread(VMCS_PRIMARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS);
 
-    // auto controls = vmread(VMCS_PRIMARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS);
+    controls |= VM_EXEC_P_PROC_BASED_USE_MSR_BITMAPS;
 
-    // controls |= VM_EXEC_P_PROC_BASED_USE_MSR_BITMAPS;
-
-    // vmwrite(VMCS_PRIMARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, controls);
+    vmwrite(VMCS_PRIMARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, controls);
 
     // =========================================================================
     // CLEAN ME UP
