@@ -82,7 +82,6 @@ __vmx_success:
     mov rax, 0x1
     ret
 
-
 ; uint64_t __vmlaunch(void)
 ;
 ; Since bareflank consists of nothing more than a bunch of shared libraries,

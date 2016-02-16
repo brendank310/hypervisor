@@ -23,6 +23,8 @@
 #include <iostream>
 
 #include <vmcs/vmcs_intel_x64.h>
+#include <vmcs/bitmap.h>
+
 #include <exit_handler/exit_handler.h>
 
 // =============================================================================
@@ -165,11 +167,9 @@ vmcs_intel_x64::launch()
     // CLEAN ME UP
     // =========================================================================
 
-    char *m_msr_bitmap = new char[4096];
-    for (auto i = 0; i < 4096; i++)
-        m_msr_bitmap[i] = 0;
+    bitmap msr_bitmap(4096*8);
 
-    vmwrite(VMCS_ADDRESS_OF_MSR_BITMAPS_FULL, (uint64_t)g_mm->virt_to_phys(m_msr_bitmap));
+    vmwrite(VMCS_ADDRESS_OF_MSR_BITMAPS_FULL, (uint64_t)g_mm->virt_to_phys(msr_bitmap.address()));
 
     auto controls = vmread(VMCS_PRIMARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS);
 
