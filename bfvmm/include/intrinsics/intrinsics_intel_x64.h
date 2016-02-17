@@ -24,6 +24,7 @@
 #define INTRINSICS_INTEL_X64_H
 
 #include <stdint.h>
+#include <iostream>
 #include <intrinsics/intrinsics_x64.h>
 
 // =============================================================================

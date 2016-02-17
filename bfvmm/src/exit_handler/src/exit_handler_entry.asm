@@ -139,6 +139,8 @@ exit_handler_entry:
     vmresume
 
 promote_vmcs_to_root:
+    mov rsp, [g_guest_rsp]
+
     ; Registers
     mov r15, [g_guest_r15]
     mov r14, [g_guest_r14]
@@ -156,10 +158,7 @@ promote_vmcs_to_root:
     mov rbx, [g_guest_rbx]
     mov rax, [g_guest_rax]
 
-    mov rsp, [g_guest_rsp]
-
     sti
-
     jmp [g_guest_rip]
 
 ;;; ;;;;;;;; CLIFF

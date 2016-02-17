@@ -115,8 +115,14 @@ vmm_intel_x64::stop()
     // We don't have to do any checks to get ourselves out of the VMX
     // root operation. We simply need to reverse what we did to get into
     // VMX operation
+    volatile uint64_t rsp = 0;
+    __asm__("" : "=S"(rsp) ::);
+    std::cout << std::hex << "rsp in : " << __PRETTY_FUNCTION__ << " 0x" << rsp << std::dec <<std::endl;
 
     ret = execute_vmxoff();
+    __asm__("" : "=S"(rsp) ::);
+    std::cout << std::hex << "rsp in : " << __PRETTY_FUNCTION__ << " 0x" << rsp << std::dec <<std::endl;
+
     if (ret != vmm_error::success)
         return ret;
 
@@ -435,15 +441,17 @@ vmm_intel_x64::execute_vmxoff()
     if (m_vmxon_enabled == false)
         return vmm_error::success;
 
-    if (m_intrinsics->vmxoff() == false)
-    {
-        std::cout << "execute_vmxoff failed" << std::endl;
-        return vmm_error::failure;
-    }
+    //if (m_intrinsics->vmxoff() == false)
+    //{
+    //    std::cout << "execute_vmxoff failed" << std::endl;
+    //    return vmm_error::failure;
+    //}
+
+    __asm__("vmxoff");
 
     m_vmxon_enabled = false;
     std::cout << "vmxoff: success" << std::endl;
-
+    std::cout << __PRETTY_FUNCTION__ << __LINE__ << std::endl;
     return vmm_error::success;
 }
 

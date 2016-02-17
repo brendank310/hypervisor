@@ -330,6 +330,7 @@ exit_handler_dispatch::handle_task_switch()
 void
 exit_handler_dispatch::handle_cpuid()
 {
+    std::cout << "cpuid grsp:" << std::hex << g_guest_rsp << std::endl;
     guest_cpuid();
     advance_rip();
 }
@@ -403,11 +404,14 @@ exit_handler_dispatch::handle_vmxoff()
     // We won't advance RIP after we handle this trap
     // so the guest will execute vmxoff again, however
     // it'll be in root mode so the operation should succeed
-    std::cout << "About to promote guest to VMX root mode" << std::endl;
 
-    promote_vmcs_to_root();
+    std::cout << "About to promote guest to VMX root mode grsp: 0x" << std::hex << g_guest_rsp << std::endl;
 
-    std::cout << "Shouldn't be possible to get here" << std::endl;
+    //promote_vmcs_to_root();
+
+    advance_rip();
+
+    return;
 }
 
 void
