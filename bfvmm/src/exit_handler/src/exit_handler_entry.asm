@@ -42,6 +42,7 @@ global g_guest_rip:data
 
 extern exit_handler
 global exit_handler_entry
+global promote_vmcs_to_root
 
 section .data
 
@@ -85,7 +86,7 @@ exit_handler_entry:
 
     cli
 
-    ; Reigsters
+    ; Registers
     mov [g_guest_rax], rax
     mov [g_guest_rbx], rbx
     mov [g_guest_rcx], rcx
@@ -137,6 +138,31 @@ exit_handler_entry:
 
     vmresume
 
+promote_vmcs_to_root:
+    ; Registers
+    mov r15, [g_guest_r15]
+    mov r14, [g_guest_r14]
+    mov r13, [g_guest_r13]
+    mov r12, [g_guest_r12]
+    mov r11, [g_guest_r11]
+    mov r10, [g_guest_r10]
+    mov r9,  [g_guest_r09]
+    mov r8,  [g_guest_r08]
+    mov rdi, [g_guest_rdi]
+    mov rsi, [g_guest_rsi]
+    mov rbp, [g_guest_rbp]
+    mov rdx, [g_guest_rdx]
+    mov rcx, [g_guest_rcx]
+    mov rbx, [g_guest_rbx]
+    mov rax, [g_guest_rax]
+
+    mov rsp, [g_guest_rsp]
+
+    sti
+
+    jmp [g_guest_rip]
+
+;;; ;;;;;;;; CLIFF
 
 ; VMM Guest Instructions
 ;

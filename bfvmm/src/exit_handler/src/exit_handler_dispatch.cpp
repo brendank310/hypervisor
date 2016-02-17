@@ -396,7 +396,19 @@ exit_handler_dispatch::handle_vmwrite()
 
 void
 exit_handler_dispatch::handle_vmxoff()
-{ unimplemented_handler(); }
+{
+    // For now, we'll use a guest issuing a vmxoff
+    // as a way of them requesting a promotion to
+    // vmx-root operation, and return back to them.
+    // We won't advance RIP after we handle this trap
+    // so the guest will execute vmxoff again, however
+    // it'll be in root mode so the operation should succeed
+    std::cout << "About to promote guest to VMX root mode" << std::endl;
+
+    promote_vmcs_to_root();
+
+    std::cout << "Shouldn't be possible to get here" << std::endl;
+}
 
 void
 exit_handler_dispatch::handle_vmxon()
