@@ -409,7 +409,12 @@ exit_handler_dispatch::dump_guest_cpu_info()
     std::cout << "fs_selector : 0x" << fs_selector << std::endl;
     std::cout << "gs_selector : 0x" << gs_selector << std::endl;
     std::cout << "ss_selector : 0x" << ss_selector << std::endl;
-    std::cout << std::hex << std::endl;
+    std::cout << std::dec << std::endl;
+
+    spin_wait();
+    spin_wait();
+    spin_wait();
+    spin_wait();
 }
 
 void
@@ -417,17 +422,24 @@ exit_handler_dispatch::handle_vmcall()
 {
     gdt_t g_gdt = { 0 };
     idt_t g_idt = { 0 };
-
     dump_guest_cpu_info();
+    std::cout << std::dec << __LINE__ << std::endl;
+    g_vcm->stop(0);
+    std::cout << std::dec << __LINE__ << std::endl;
+    advance_rip();
+    std::cout << std::dec << __LINE__ << std::endl;    spin_wait();
 
-    m_intrinsics->write_cs(m_intrinsics->vmread(VMCS_GUEST_CS_SELECTOR));
-    m_intrinsics->write_gs(m_intrinsics->vmread(VMCS_GUEST_GS_SELECTOR));
+    std::cout << "About to promote!" << std::endl;
+    spin_wait();
+
     m_intrinsics->write_es(m_intrinsics->vmread(VMCS_GUEST_ES_SELECTOR));
     m_intrinsics->write_fs(m_intrinsics->vmread(VMCS_GUEST_FS_SELECTOR));
-    m_intrinsics->write_ss(m_intrinsics->vmread(VMCS_GUEST_SS_SELECTOR));
     m_intrinsics->write_ds(m_intrinsics->vmread(VMCS_GUEST_DS_SELECTOR));
     m_intrinsics->write_ldtr(m_intrinsics->vmread(VMCS_GUEST_LDTR_SELECTOR));
     m_intrinsics->write_tr(m_intrinsics->vmread(VMCS_GUEST_TR_SELECTOR));
+    m_intrinsics->write_gs(m_intrinsics->vmread(VMCS_GUEST_GS_SELECTOR));
+
+    dump_guest_cpu_info();
 
     g_idt.base = m_intrinsics->vmread(VMCS_GUEST_IDTR_BASE);
     g_idt.limit = m_intrinsics->vmread(VMCS_GUEST_IDTR_LIMIT);
@@ -438,11 +450,12 @@ exit_handler_dispatch::handle_vmcall()
     m_intrinsics->write_idt(&g_idt);
     m_intrinsics->write_gdt(&g_gdt);
 
-    g_vcm->stop(0);
-    advance_rip();
     dump_guest_cpu_info();
 
-    std::cout << "About to promote!" << std::endl;
+    //m_intrinsics->write_cs(m_intrinsics->vmread(VMCS_GUEST_CS_SELECTOR));
+    //m_intrinsics->write_ss(m_intrinsics->vmread(VMCS_GUEST_SS_SELECTOR));
+    std::cout << std::dec << __LINE__ << std::endl;    spin_wait();
+
     promote_vmcs_to_root();
 }
 
