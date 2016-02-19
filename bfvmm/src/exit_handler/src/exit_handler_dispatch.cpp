@@ -22,6 +22,7 @@
 #include <iostream>
 #include <exit_handler/exit_handler.h>
 #include <exit_handler/exit_handler_dispatch.h>
+#include <vcpu/vcpu_manager.h>
 
 exit_handler_dispatch::exit_handler_dispatch(intrinsics_intel_x64 *intrinsics) : m_intrinsics(intrinsics)
 {
@@ -331,6 +332,7 @@ void
 exit_handler_dispatch::handle_cpuid()
 {
     std::cout << "cpuid grsp:" << std::hex << g_guest_rsp << std::endl;
+    dump_guest_cpu_info();
     guest_cpuid();
     advance_rip();
 }
@@ -364,8 +366,85 @@ exit_handler_dispatch::handle_rsm()
 { unimplemented_handler(); }
 
 void
+exit_handler_dispatch::dump_guest_cpu_info()
+{
+    uint64_t cs_selector = 0;
+    uint64_t ds_selector = 0;
+    uint64_t es_selector = 0;
+    uint64_t fs_selector = 0;
+    uint64_t gs_selector = 0;
+    uint64_t ss_selector = 0;
+
+    uint64_t ldtr_selector = 0;
+    uint64_t tr_selector = 0;
+
+    uint64_t g_gdt_base = 0;
+    uint64_t g_gdt_limit = 0;
+
+    uint64_t g_idt_base = 0;
+    uint64_t g_idt_limit = 0;
+
+    m_intrinsics->vmread(VMCS_GUEST_CS_SELECTOR, &cs_selector);
+    m_intrinsics->vmread(VMCS_GUEST_DS_SELECTOR, &ds_selector);
+    m_intrinsics->vmread(VMCS_GUEST_ES_SELECTOR, &es_selector);
+    m_intrinsics->vmread(VMCS_GUEST_FS_SELECTOR, &fs_selector);
+    m_intrinsics->vmread(VMCS_GUEST_GS_SELECTOR, &gs_selector);
+    m_intrinsics->vmread(VMCS_GUEST_SS_SELECTOR, &ss_selector);
+
+    m_intrinsics->vmread(VMCS_GUEST_LDTR_SELECTOR, &ldtr_selector);
+    m_intrinsics->vmread(VMCS_GUEST_TR_SELECTOR, &tr_selector);
+
+    m_intrinsics->vmread(VMCS_GUEST_IDTR_BASE, &g_idt_base);
+    m_intrinsics->vmread(VMCS_GUEST_IDTR_LIMIT, &g_idt_limit);
+
+    m_intrinsics->vmread(VMCS_GUEST_GDTR_BASE, &g_gdt_base);
+    m_intrinsics->vmread(VMCS_GUEST_GDTR_LIMIT, &g_gdt_limit);
+
+    std::cout << std::hex << std::endl;
+    std::cout << "GDT base : 0x" << g_gdt_base << " limit: 0x" << g_gdt_limit << std::endl;
+    std::cout << "IDT base : 0x" << g_idt_base << " limit: 0x" << g_idt_limit << std::endl;
+    std::cout << "cs_selector : 0x" << cs_selector << std::endl;
+    std::cout << "ds_selector : 0x" << ds_selector << std::endl;
+    std::cout << "es_selector : 0x" << es_selector << std::endl;
+    std::cout << "fs_selector : 0x" << fs_selector << std::endl;
+    std::cout << "gs_selector : 0x" << gs_selector << std::endl;
+    std::cout << "ss_selector : 0x" << ss_selector << std::endl;
+    std::cout << std::hex << std::endl;
+}
+
+void
 exit_handler_dispatch::handle_vmcall()
-{ unimplemented_handler(); }
+{
+    gdt_t g_gdt = { 0 };
+    idt_t g_idt = { 0 };
+
+    dump_guest_cpu_info();
+
+    m_intrinsics->write_cs(m_intrinsics->vmread(VMCS_GUEST_CS_SELECTOR));
+    m_intrinsics->write_gs(m_intrinsics->vmread(VMCS_GUEST_GS_SELECTOR));
+    m_intrinsics->write_es(m_intrinsics->vmread(VMCS_GUEST_ES_SELECTOR));
+    m_intrinsics->write_fs(m_intrinsics->vmread(VMCS_GUEST_FS_SELECTOR));
+    m_intrinsics->write_ss(m_intrinsics->vmread(VMCS_GUEST_SS_SELECTOR));
+    m_intrinsics->write_ds(m_intrinsics->vmread(VMCS_GUEST_DS_SELECTOR));
+    m_intrinsics->write_ldtr(m_intrinsics->vmread(VMCS_GUEST_LDTR_SELECTOR));
+    m_intrinsics->write_tr(m_intrinsics->vmread(VMCS_GUEST_TR_SELECTOR));
+
+    g_idt.base = m_intrinsics->vmread(VMCS_GUEST_IDTR_BASE);
+    g_idt.limit = m_intrinsics->vmread(VMCS_GUEST_IDTR_LIMIT);
+
+    g_gdt.base = m_intrinsics->vmread(VMCS_GUEST_GDTR_BASE);
+    g_gdt.limit = m_intrinsics->vmread(VMCS_GUEST_GDTR_LIMIT);
+
+    m_intrinsics->write_idt(&g_idt);
+    m_intrinsics->write_gdt(&g_gdt);
+
+    g_vcm->stop(0);
+    advance_rip();
+    dump_guest_cpu_info();
+
+    std::cout << "About to promote!" << std::endl;
+    promote_vmcs_to_root();
+}
 
 void
 exit_handler_dispatch::handle_vmclear()
@@ -405,11 +484,9 @@ exit_handler_dispatch::handle_vmxoff()
     // so the guest will execute vmxoff again, however
     // it'll be in root mode so the operation should succeed
 
-    std::cout << "About to promote guest to VMX root mode grsp: 0x" << std::hex << g_guest_rsp << std::endl;
-
+    unimplemented_handler();
     //promote_vmcs_to_root();
-
-    advance_rip();
+    //advance_rip();
 
     return;
 }
@@ -595,7 +672,8 @@ unimplemented:
     std::cout << std::dec << std::endl;
 
     spin_wait();
-    m_intrinsics->halt();
+    spin_wait();
+    //    m_intrinsics->halt();
 }
 
 void
@@ -747,6 +825,20 @@ exit_handler_dispatch::unimplemented_handler()
 {
     std::cout << std::endl;
     std::cout << std::endl;
+    std::cout << "Guest register state: " << std::hex << std::endl;
+    std::cout << "----------------------------------------------------------------------" << std::endl;
+    std::cout << "g_guest_rax: 0x" << g_guest_rax << std::endl;
+    std::cout << "g_guest_rbx: 0x" << g_guest_rbx << std::endl;
+    std::cout << "g_guest_rcx: 0x" << g_guest_rcx << std::endl;
+    std::cout << "g_guest_rdx: 0x" << g_guest_rdx << std::endl << std::endl;
+    std::cout << "g_guest_rsi: 0x" << g_guest_rsi << std::endl;
+    std::cout << "g_guest_rdi: 0x" << g_guest_rdi << std::endl << std::endl;
+    std::cout << "g_guest_rsp: 0x" << g_guest_rsp << std::endl;
+    std::cout << "g_guest_rbp: 0x" << g_guest_rbp << std::endl;
+    std::cout << "g_guest_rip: 0x" << g_guest_rip << std::endl;
+
+    std::cout << std::endl;
+    std::cout << std::endl;
     std::cout << "Unimplemented Exit Handler: " << std::hex << std::endl;
     std::cout << "----------------------------------------------------------------------" << std::endl;
     std::cout << "- exit reason: 0x" << m_exit_reason << " = " << exit_reason_to_str(m_exit_reason) << std::endl;
@@ -755,7 +847,8 @@ exit_handler_dispatch::unimplemented_handler()
     std::cout << std::dec << std::endl;
 
     spin_wait();
-    // m_intrinsics->halt();
+    spin_wait();
+    //    m_intrinsics->halt();
 }
 
 const char *

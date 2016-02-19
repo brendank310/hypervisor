@@ -53,10 +53,16 @@ vcpu_intel_x64::vcpu_intel_x64(int64_t id,
         m_vmcs = new vmcs_intel_x64(intrinsics);
 }
 
+static void blah_fn(void)
+{
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+}
+
 vcpu_error::type
 vcpu_intel_x64::start()
 {
     std::cout << "About to start and launch the hypervisor" << std::endl;
+    std::cout << "blah fn: " << reinterpret_cast<void *>(blah_fn) << std::endl;
     if (m_vmm->start() != vmm_error::success)
         return vcpu_error::failure;
 
@@ -77,8 +83,25 @@ vcpu_intel_x64::dispatch()
 vcpu_error::type
 vcpu_intel_x64::stop()
 {
+    m_vmcs->clear_vmcs_region();
+
     if (m_vmm->stop() != vmm_error::success)
         return vcpu_error::failure;
+
+    return vcpu_error::success;
+}
+
+vcpu_error::type
+vcpu_intel_x64::request_teardown()
+{
+    std::cout << std::hex << "Current RIP: 0x" << m_intrinsics->read_rip() << std::endl;
+
+    std::cout << "FS Selector: " << m_intrinsics->read_fs() << std::endl;
+    std::cout << "Target RIP: " << reinterpret_cast<void *>(blah_fn) << std::endl;
+    m_intrinsics->vmcall();
+    blah_fn();
+    std::cout << std::hex << "Current RIP: 0x" << m_intrinsics->read_rip() << std::endl;
+    std::cout << "teardown has returned to the kernel!!!" << std::endl;
 
     return vcpu_error::success;
 }

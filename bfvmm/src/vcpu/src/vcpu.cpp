@@ -66,6 +66,12 @@ vcpu::stop()
     return vcpu_error::success;
 }
 
+vcpu_error::type
+vcpu::request_teardown()
+{
+    return vcpu_error::success;
+}
+
 void
 erase(std::string &str, const std::string &substr)
 {

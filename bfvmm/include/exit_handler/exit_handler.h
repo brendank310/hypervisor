@@ -56,6 +56,8 @@ extern "C"
     /// Promote a guest to root VMX operation
     void promote_vmcs_to_root(void);
 
+    uint64_t check_rip_in_rax(void);
+
     /// Guest State
     ///
     /// The following exposes the guest state to the rest of the exit handler.

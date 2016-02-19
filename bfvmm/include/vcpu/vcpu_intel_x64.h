@@ -81,6 +81,8 @@ public:
     ///
     virtual vcpu_error::type stop() override;
 
+    virtual vcpu_error::type request_teardown() override;
+
 private:
 
     vmm_intel_x64 *m_vmm;

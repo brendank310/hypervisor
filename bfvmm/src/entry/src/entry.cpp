@@ -57,8 +57,11 @@ stop_vmm_trampoline(int64_t arg)
 {
     (void) arg;
 
-    if (g_vcm->stop(0) != vcpu_manager_error::success)
+    if (g_vcm->request_teardown(0) != vcpu_manager_error::success)
         return ENTRY_ERROR_VMM_STOP_FAILED;
+
+    //    if (g_vcm->stop(0) != vcpu_manager_error::success)
+    //        return ENTRY_ERROR_VMM_STOP_FAILED;
 
     bfdebug << "stopped:" << bfendl;
     bfdebug << "    - free blocks: " << g_mm->free_blocks() << " out of: "

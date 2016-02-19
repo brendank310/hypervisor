@@ -57,6 +57,7 @@ public:
     ///     and/or software configuration is not supported, failure otherwise
     ///
     virtual vmcs_error::type launch();
+    virtual vmcs_error::type clear_vmcs_region();
 
 protected:
 
@@ -68,7 +69,7 @@ protected:
     virtual vmcs_error::type create_vmcs_region();
     virtual vmcs_error::type release_vmxon_region();
 
-    virtual vmcs_error::type clear_vmcs_region();
+
     virtual vmcs_error::type load_vmcs_region();
 
     virtual uint64_t vmcs_region_size();

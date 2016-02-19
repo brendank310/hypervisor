@@ -86,6 +86,8 @@ public:
     ///
     vcpu_manager_error::type stop(int64_t vcpuid);
 
+    vcpu_manager_error::type request_teardown(int64_t vcpuid);
+
     /// Write to Log
     ///
     /// Writes a string 'str' of length 'len' to a vcpuid's internal debug

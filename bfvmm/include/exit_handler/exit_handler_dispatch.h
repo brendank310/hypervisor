@@ -25,7 +25,6 @@
 #include <stdint.h>
 #include <intrinsics/intrinsics_intel_x64.h>
 
-
 class exit_handler_dispatch
 {
 public:
@@ -101,7 +100,7 @@ protected:
     virtual void advance_rip();
 
 private:
-
+    void dump_guest_cpu_info();
     void spin_wait();
     void unimplemented_handler();
 

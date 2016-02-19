@@ -115,29 +115,32 @@ vmm_intel_x64::stop()
     // We don't have to do any checks to get ourselves out of the VMX
     // root operation. We simply need to reverse what we did to get into
     // VMX operation
-    volatile uint64_t rsp = 0;
-    __asm__("" : "=S"(rsp) ::);
-    std::cout << std::hex << "rsp in : " << __PRETTY_FUNCTION__ << " 0x" << rsp << std::dec <<std::endl;
 
     ret = execute_vmxoff();
-    __asm__("" : "=S"(rsp) ::);
-    std::cout << std::hex << "rsp in : " << __PRETTY_FUNCTION__ << " 0x" << rsp << std::dec <<std::endl;
 
     if (ret != vmm_error::success)
         return ret;
 
+    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+    
     ret = disable_vmx_operation();
     if (ret != vmm_error::success)
         return ret;
 
+    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+    
     ret = verify_vmx_operation_disabled();
     if (ret != vmm_error::success)
         return ret;
 
+    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+    
     ret = release_vmxon_region();
     if (ret != vmm_error::success)
         return ret;
 
+    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+    
     return vmm_error::success;
 }
 
@@ -429,6 +432,9 @@ vmm_intel_x64::execute_vmxon()
     return vmm_error::success;
 }
 
+
+volatile uint64_t t_rsp;
+
 vmm_error::type
 vmm_intel_x64::execute_vmxoff()
 {
@@ -441,17 +447,16 @@ vmm_intel_x64::execute_vmxoff()
     if (m_vmxon_enabled == false)
         return vmm_error::success;
 
-    //if (m_intrinsics->vmxoff() == false)
-    //{
-    //    std::cout << "execute_vmxoff failed" << std::endl;
-    //    return vmm_error::failure;
-    //}
-
-    __asm__("vmxoff");
+    if (m_intrinsics->vmxoff() == false)
+    {
+        std::cout << "execute_vmxoff failed" << std::endl;
+        return vmm_error::failure;
+    }
 
     m_vmxon_enabled = false;
+
     std::cout << "vmxoff: success" << std::endl;
-    std::cout << __PRETTY_FUNCTION__ << __LINE__ << std::endl;
+
     return vmm_error::success;
 }
 

@@ -99,6 +99,8 @@ public:
     ///
     virtual vcpu_error::type stop();
 
+    virtual vcpu_error::type request_teardown();
+
     /// Write to Log
     ///
     /// Writes to this specific vCPU's log. Note that this could be writing

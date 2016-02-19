@@ -21,6 +21,7 @@
 
 global __vmxon:function
 global __vmxoff:function
+global __vmcall:function
 global __vmclear:function
 global __vmptrld:function
 global __vmptrst:function
@@ -39,6 +40,12 @@ __vmxon:
 ; uint64_t __vmxoff(void)
 __vmxoff:
     vmxoff
+    jbe __vmx_failure
+    jmp __vmx_success
+
+; uint64_t __vmxoff(void)
+__vmcall:
+    vmcall
     jbe __vmx_failure
     jmp __vmx_success
 

@@ -43,7 +43,8 @@ global g_guest_rip:data
 extern exit_handler
 global exit_handler_entry
 global promote_vmcs_to_root
-
+global check_rip_in_rax
+ 
 section .data
 
 g_guest_rax dq 0
@@ -138,10 +139,16 @@ exit_handler_entry:
 
     vmresume
 
-promote_vmcs_to_root:
-    mov rsp, [g_guest_rsp]
+check_rip_in_rax:
+    mov rax, [g_guest_rip]
+    ret
 
+promote_vmcs_to_root:
     ; Registers
+    mov rsp, [g_guest_rsp]
+    mov rax, [g_guest_rip]
+    push rax
+
     mov r15, [g_guest_r15]
     mov r14, [g_guest_r14]
     mov r13, [g_guest_r13]
@@ -156,12 +163,10 @@ promote_vmcs_to_root:
     mov rdx, [g_guest_rdx]
     mov rcx, [g_guest_rcx]
     mov rbx, [g_guest_rbx]
-    mov rax, [g_guest_rax]
 
     sti
-    jmp [g_guest_rip]
 
-;;; ;;;;;;;; CLIFF
+    ret
 
 ; VMM Guest Instructions
 ;
