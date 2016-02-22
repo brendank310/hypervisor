@@ -94,10 +94,18 @@ vcpu_intel_x64::stop()
 vcpu_error::type
 vcpu_intel_x64::request_teardown()
 {
+  gdt_t gdt = { 0 };
+  idt_t idt = { 0 };
     std::cout << std::hex << "Current RIP: 0x" << m_intrinsics->read_rip() << std::endl;
 
     std::cout << "FS Selector: " << m_intrinsics->read_fs() << std::endl;
     std::cout << "Target RIP: " << reinterpret_cast<void *>(blah_fn) << std::endl;
+    std::cout << "TR register: " << m_intrinsics->read_tr() << std::endl;
+    m_intrinsics->read_idt(&idt);
+    m_intrinsics->read_gdt(&gdt);
+    std::cout << " IDTBase: 0x" << idt.base << " limit 0x" << idt.limit << std::endl;
+    std::cout << " gDTBase: 0x" << gdt.base << " limit 0x" << gdt.limit << std::endl;
+
     m_intrinsics->vmcall();
     blah_fn();
     std::cout << std::hex << "Current RIP: 0x" << m_intrinsics->read_rip() << std::endl;

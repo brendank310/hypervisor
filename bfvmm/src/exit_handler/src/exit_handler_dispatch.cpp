@@ -332,7 +332,6 @@ void
 exit_handler_dispatch::handle_cpuid()
 {
     std::cout << "cpuid grsp:" << std::hex << g_guest_rsp << std::endl;
-    dump_guest_cpu_info();
     guest_cpuid();
     advance_rip();
 }
@@ -394,15 +393,10 @@ exit_handler_dispatch::dump_guest_cpu_info()
     m_intrinsics->vmread(VMCS_GUEST_LDTR_SELECTOR, &ldtr_selector);
     m_intrinsics->vmread(VMCS_GUEST_TR_SELECTOR, &tr_selector);
 
-    m_intrinsics->vmread(VMCS_GUEST_IDTR_BASE, &g_idt_base);
-    m_intrinsics->vmread(VMCS_GUEST_IDTR_LIMIT, &g_idt_limit);
-
-    m_intrinsics->vmread(VMCS_GUEST_GDTR_BASE, &g_gdt_base);
-    m_intrinsics->vmread(VMCS_GUEST_GDTR_LIMIT, &g_gdt_limit);
-
     std::cout << std::hex << std::endl;
-    std::cout << "GDT base : 0x" << g_gdt_base << " limit: 0x" << g_gdt_limit << std::endl;
-    std::cout << "IDT base : 0x" << g_idt_base << " limit: 0x" << g_idt_limit << std::endl;
+    std::cout << "GDT base : 0x" << m_intrinsics->vmread(VMCS_GUEST_GDTR_BASE) << " limit: 0x" << m_intrinsics->vmread(VMCS_GUEST_GDTR_LIMIT) << std::endl;
+    std::cout << "IDT base : 0x" << m_intrinsics->vmread(VMCS_GUEST_IDTR_BASE) << " limit: 0x" << m_intrinsics->vmread(VMCS_GUEST_IDTR_LIMIT) << std::endl;
+    std::cout << std::hex << "Guest TR register: 0x" << m_intrinsics->vmread(VMCS_GUEST_TR_SELECTOR) << " host TR: 0x" << m_intrinsics->read_tr() << std::endl;
     std::cout << "cs_selector : 0x" << cs_selector << std::endl;
     std::cout << "ds_selector : 0x" << ds_selector << std::endl;
     std::cout << "es_selector : 0x" << es_selector << std::endl;
@@ -424,39 +418,25 @@ exit_handler_dispatch::handle_vmcall()
     idt_t g_idt = { 0 };
     dump_guest_cpu_info();
     std::cout << std::dec << __LINE__ << std::endl;
-    g_vcm->stop(0);
-    std::cout << std::dec << __LINE__ << std::endl;
-    advance_rip();
-    std::cout << std::dec << __LINE__ << std::endl;    spin_wait();
-
     std::cout << "About to promote!" << std::endl;
-    spin_wait();
-
-    m_intrinsics->write_es(m_intrinsics->vmread(VMCS_GUEST_ES_SELECTOR));
-    m_intrinsics->write_fs(m_intrinsics->vmread(VMCS_GUEST_FS_SELECTOR));
-    m_intrinsics->write_ds(m_intrinsics->vmread(VMCS_GUEST_DS_SELECTOR));
-    m_intrinsics->write_ldtr(m_intrinsics->vmread(VMCS_GUEST_LDTR_SELECTOR));
-    m_intrinsics->write_tr(m_intrinsics->vmread(VMCS_GUEST_TR_SELECTOR));
-    m_intrinsics->write_gs(m_intrinsics->vmread(VMCS_GUEST_GS_SELECTOR));
-
-    dump_guest_cpu_info();
-
+    //m_intrinsics->write_cs(m_intrinsics->vmread(VMCS_GUEST_CS_SELECTOR));
+    //m_intrinsics->write_ss(m_intrinsics->vmread(VMCS_GUEST_SS_SELECTOR));
+    g_gdt.base = m_intrinsics->vmread(VMCS_GUEST_GDTR_BASE);
+    g_gdt.limit = m_intrinsics->vmread(VMCS_GUEST_GDTR_LIMIT);
     g_idt.base = m_intrinsics->vmread(VMCS_GUEST_IDTR_BASE);
     g_idt.limit = m_intrinsics->vmread(VMCS_GUEST_IDTR_LIMIT);
 
-    g_gdt.base = m_intrinsics->vmread(VMCS_GUEST_GDTR_BASE);
-    g_gdt.limit = m_intrinsics->vmread(VMCS_GUEST_GDTR_LIMIT);
-
-    m_intrinsics->write_idt(&g_idt);
-    m_intrinsics->write_gdt(&g_gdt);
-
-    dump_guest_cpu_info();
-
-    //m_intrinsics->write_cs(m_intrinsics->vmread(VMCS_GUEST_CS_SELECTOR));
-    //m_intrinsics->write_ss(m_intrinsics->vmread(VMCS_GUEST_SS_SELECTOR));
+    g_vcm->stop(0);
+    std::cout << std::dec << __LINE__ << std::endl;
+    advance_rip();
+    //m_intrinsics->write_idt(&g_idt);
+    //m_intrinsics->write_gdt(&g_gdt);
     std::cout << std::dec << __LINE__ << std::endl;    spin_wait();
-
-    promote_vmcs_to_root();
+    guest_cpuid();
+//    promote_vmcs_to_root();
+    std::cout << std::endl << std::endl;
+    dump_guest_cpu_info();
+    std::cout << std::dec << __PRETTY_FUNCTION__ << __LINE__ << std::endl;    spin_wait();
 }
 
 void

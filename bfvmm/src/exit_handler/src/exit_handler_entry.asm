@@ -22,6 +22,38 @@
 bits 64
 default rel
 
+%define VMCS_GUEST_RSP 0x0000681C
+%define VMCS_GUEST_RIP 0x0000681E
+%define VMCS_GUEST_CR0                                            0x00006800
+%define VMCS_GUEST_CR3                                            0x00006802
+%define VMCS_GUEST_CR4                                            0x00006804
+%define VMCS_GUEST_ES_SELECTOR                                    0x00000800
+%define VMCS_GUEST_CS_SELECTOR                                    0x00000802
+%define VMCS_GUEST_SS_SELECTOR                                    0x00000804
+%define VMCS_GUEST_DS_SELECTOR                                    0x00000806
+%define VMCS_GUEST_FS_SELECTOR                                    0x00000808
+%define VMCS_GUEST_GS_SELECTOR                                    0x0000080A
+%define VMCS_GUEST_LDTR_SELECTOR                                  0x0000080C
+%define VMCS_GUEST_TR_SELECTOR                                    0x0000080E
+%define VMCS_GUEST_INTERRUPT_STATUS                               0x00000810
+%define VMCS_GUEST_ES_BASE                                        0x00006806
+%define VMCS_GUEST_CS_BASE                                        0x00006808
+%define VMCS_GUEST_SS_BASE                                        0x0000680A
+%define VMCS_GUEST_DS_BASE                                        0x0000680C
+%define VMCS_GUEST_FS_BASE                                        0x0000680E
+%define VMCS_GUEST_GS_BASE                                        0x00006810
+%define VMCS_GUEST_LDTR_BASE                                      0x00006812
+%define VMCS_GUEST_TR_BASE                                        0x00006814
+%define VMCS_GUEST_GDTR_BASE                                      0x00006816
+%define VMCS_GUEST_IDTR_BASE                                      0x00006818
+%define VMCS_GUEST_DR7                                            0x0000681A
+%define VMCS_GUEST_RSP                                            0x0000681C
+%define VMCS_GUEST_RIP                                            0x0000681E
+%define VMCS_GUEST_RFLAGS                                         0x00006820
+%define VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS                       0x00006822
+%define VMCS_GUEST_IA32_SYSENTER_ESP                              0x00006824
+%define VMCS_GUEST_IA32_SYSENTER_EIP                              0x00006826
+
 global g_guest_rax:data
 global g_guest_rbx:data
 global g_guest_rcx:data
@@ -39,12 +71,13 @@ global g_guest_r14:data
 global g_guest_r15:data
 global g_guest_rsp:data
 global g_guest_rip:data
+global g_guest_cs_sel:data
 
 extern exit_handler
 global exit_handler_entry
 global promote_vmcs_to_root
 global check_rip_in_rax
- 
+
 section .data
 
 g_guest_rax dq 0
@@ -64,9 +97,57 @@ g_guest_r14 dq 0
 g_guest_r15 dq 0
 g_guest_rsp dq 0
 g_guest_rip dq 0
-
+g_guest_cs_sel dw 0
 section .text
 
+
+transfer_es_selector:
+	mov rax, VMCS_GUEST_ES_SELECTOR
+	vmread rbx, rax
+	mov es, bx
+
+transfer_ds_selector:
+	mov rax, VMCS_GUEST_DS_SELECTOR
+	vmread rbx, rax
+	mov ds, bx
+
+transfer_ss_selector:
+	mov rax, VMCS_GUEST_SS_SELECTOR
+	vmread rbx, rax
+	mov ss, bx
+    pop rax     
+    mov rsp, [g_guest_rsp]
+    push rax
+	mov rax, VMCS_GUEST_FS_SELECTOR
+	vmread rbx, rax
+	mov fs, bx
+
+	mov rax, VMCS_GUEST_GS_SELECTOR
+	vmread rbx, rax
+	mov gs, bx
+
+    mov rdi, [g_guest_rdi]
+    mov rsi, [g_guest_rsi]
+    mov rbp, [g_guest_rbp]
+
+    mov rdx, [g_guest_rdx]
+    mov rcx, [g_guest_rcx]
+    mov rbx, [g_guest_rbx]
+    mov rax, [g_guest_rax]
+    mov r15, [g_guest_r15]
+    mov r14, [g_guest_r14]
+    mov r13, [g_guest_r13]
+    mov r12, [g_guest_r12]
+    mov r11, [g_guest_r11]
+    mov r10, [g_guest_r10]
+    mov r9,  [g_guest_r09]
+    mov r8,  [g_guest_r08]
+
+    
+	;; VMCS Promotion
+promote_vmcs_to_root:
+
+    ret
 ; VMM Entry Point
 ;
 ; The exit handler is the actual VMM. It's the peice of code that sits above
@@ -105,17 +186,17 @@ exit_handler_entry:
     mov [g_guest_r15], r15
 
     ; RSP, RIP
-    mov rdi, 0x0000681C
+    mov rdi, VMCS_GUEST_RSP
     vmread [g_guest_rsp], rdi
-    mov rdi, 0x0000681E
+    mov rdi, VMCS_GUEST_RIP
     vmread [g_guest_rip], rdi
 
     call exit_handler wrt ..plt
 
     ; RIP, RSP
-    mov rdi, 0x0000681E
+    mov rdi, VMCS_GUEST_RIP
     vmwrite rdi, [g_guest_rip]
-    mov rdi, 0x0000681C
+    mov rdi, VMCS_GUEST_RSP
     vmwrite rdi, [g_guest_rsp]
 
     ; Registers
@@ -138,35 +219,6 @@ exit_handler_entry:
     sti
 
     vmresume
-
-check_rip_in_rax:
-    mov rax, [g_guest_rip]
-    ret
-
-promote_vmcs_to_root:
-    ; Registers
-    mov rsp, [g_guest_rsp]
-    mov rax, [g_guest_rip]
-    push rax
-
-    mov r15, [g_guest_r15]
-    mov r14, [g_guest_r14]
-    mov r13, [g_guest_r13]
-    mov r12, [g_guest_r12]
-    mov r11, [g_guest_r11]
-    mov r10, [g_guest_r10]
-    mov r9,  [g_guest_r09]
-    mov r8,  [g_guest_r08]
-    mov rdi, [g_guest_rdi]
-    mov rsi, [g_guest_rsi]
-    mov rbp, [g_guest_rbp]
-    mov rdx, [g_guest_rdx]
-    mov rcx, [g_guest_rcx]
-    mov rbx, [g_guest_rbx]
-
-    sti
-
-    ret
 
 ; VMM Guest Instructions
 ;
