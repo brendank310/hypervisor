@@ -67,7 +67,7 @@ vcpu::stop()
 }
 
 vcpu_error::type
-vcpu::request_teardown()
+vcpu::promote_to_root()
 {
     return vcpu_error::success;
 }

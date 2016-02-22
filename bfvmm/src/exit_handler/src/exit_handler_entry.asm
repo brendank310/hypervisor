@@ -126,6 +126,12 @@ transfer_ss_selector:
 	vmread rbx, rax
 	mov gs, bx
 
+	;; VMCS Promotion
+promote_vmcs_to_root:
+    mov rax, [g_guest_rip]
+    mov rsp, [g_guest_rsp]
+    push rax
+
     mov rdi, [g_guest_rdi]
     mov rsi, [g_guest_rsi]
     mov rbp, [g_guest_rbp]
@@ -142,12 +148,11 @@ transfer_ss_selector:
     mov r10, [g_guest_r10]
     mov r9,  [g_guest_r09]
     mov r8,  [g_guest_r08]
+    mov rsp, [g_guest_rsp]
 
-    
-	;; VMCS Promotion
-promote_vmcs_to_root:
-
+    sti
     ret
+
 ; VMM Entry Point
 ;
 ; The exit handler is the actual VMM. It's the peice of code that sits above

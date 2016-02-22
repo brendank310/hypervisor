@@ -131,6 +131,9 @@ public:
     ///
     virtual void *phys_to_virt(void *phys);
 
+    /// Top level page table physical address
+    virtual void *top_level_page_table();
+    
     /// Adds Memory Descriptor List
     ///
     /// Adds a memory descriptor list to the memory manager. The memory

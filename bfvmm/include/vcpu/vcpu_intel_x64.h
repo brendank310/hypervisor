@@ -81,9 +81,15 @@ public:
     ///
     virtual vcpu_error::type stop() override;
 
-    virtual vcpu_error::type request_teardown() override;
+    /// Promote to Root
+    ///
+    /// Promotes this VCPU guest state to running as
+    /// the host. Following this, the hypervisor can
+    /// be shut down from the promoted guest.
+    virtual vcpu_error::type promote_to_root() override;
 
 private:
+    void dump_cpu_state();
 
     vmm_intel_x64 *m_vmm;
     vmcs_intel_x64 *m_vmcs;

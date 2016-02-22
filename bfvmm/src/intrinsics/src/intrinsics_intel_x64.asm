@@ -43,8 +43,9 @@ __vmxoff:
     jbe __vmx_failure
     jmp __vmx_success
 
-; uint64_t __vmxoff(void)
+; uint64_t __vmcall(uint64_t value)
 __vmcall:
+    mov rax, rdi
     vmcall
     jbe __vmx_failure
     jmp __vmx_success

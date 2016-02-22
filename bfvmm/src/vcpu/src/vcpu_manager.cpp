@@ -104,7 +104,7 @@ vcpu_manager::request_teardown(int64_t vcpuid)
     if (!vc)
         return vcpu_manager_error::invalid;
 
-    if (vc->request_teardown() != vcpu_error::success)
+    if (vc->promote_to_root() != vcpu_error::success)
         return vcpu_manager_error::failure;
 
     return vcpu_manager_error::success;

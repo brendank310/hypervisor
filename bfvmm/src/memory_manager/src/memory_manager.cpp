@@ -271,6 +271,12 @@ memory_manager::is_block_aligned(int64_t block, int64_t alignment)
     return ((uint64_t)block_to_virt(block) % alignment) == 0;
 }
 
+void *
+memory_manager::top_level_page_table()
+{
+    return virt_to_phys(pager.pml4());
+}
+
 int64_t
 memory_manager::add_mdl(struct memory_descriptor *mdl, int64_t num)
 {
@@ -312,11 +318,8 @@ memory_manager::add_mdl(struct memory_descriptor *mdl, int64_t num)
     for (auto i = 0; i < num; i++)
     {
         const auto &md = mdl[i];
-        //bferror << md.phys << "<-->" << md.virt << bfendl;
         pager.add_entry(md.phys, md.virt);
     }
-
-    //pager.dump_page_tables(mdl[0].virt);
 
     return MEMORY_MANAGER_SUCCESS;
 }

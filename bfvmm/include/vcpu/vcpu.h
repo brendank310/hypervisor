@@ -99,7 +99,15 @@ public:
     ///
     virtual vcpu_error::type stop();
 
-    virtual vcpu_error::type request_teardown();
+    /// Promote to Root
+    ///
+    /// Promotes this VCPU guest state to running as
+    /// the host. Following this, the hypervisor can
+    /// be shut down from the promoted guest.
+    ///
+    /// @return success on success, failure otherwise
+    ///
+    virtual vcpu_error::type promote_to_root();
 
     /// Write to Log
     ///

@@ -37,7 +37,7 @@ extern "C" {
 
 uint64_t __vmxon(void *vmxon_region);
 uint64_t __vmxoff(void);
-uint64_t __vmcall(void);
+uint64_t __vmcall(uint64_t value);
 uint64_t __vmclear(void *vmcs_region);
 uint64_t __vmptrld(void *vmcs_region);
 uint64_t __vmptrst(void *vmcs_region);
@@ -69,9 +69,9 @@ public:
         return tmp;
     }
 
-    virtual bool vmcall()
+    virtual bool vmcall(uint64_t value)
     {
-        tmp = __vmcall();
+        tmp = __vmcall(value);
         return tmp;
     }
 

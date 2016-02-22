@@ -91,25 +91,42 @@ vcpu_intel_x64::stop()
     return vcpu_error::success;
 }
 
-vcpu_error::type
-vcpu_intel_x64::request_teardown()
+void
+vcpu_intel_x64::dump_cpu_state()
 {
-  gdt_t gdt = { 0 };
-  idt_t idt = { 0 };
-    std::cout << std::hex << "Current RIP: 0x" << m_intrinsics->read_rip() << std::endl;
-
-    std::cout << "FS Selector: " << m_intrinsics->read_fs() << std::endl;
-    std::cout << "Target RIP: " << reinterpret_cast<void *>(blah_fn) << std::endl;
-    std::cout << "TR register: " << m_intrinsics->read_tr() << std::endl;
+    gdt_t gdt = { 0 };
+    idt_t idt = { 0 };
     m_intrinsics->read_idt(&idt);
     m_intrinsics->read_gdt(&gdt);
-    std::cout << " IDTBase: 0x" << idt.base << " limit 0x" << idt.limit << std::endl;
-    std::cout << " gDTBase: 0x" << gdt.base << " limit 0x" << gdt.limit << std::endl;
 
-    m_intrinsics->vmcall();
-    blah_fn();
-    std::cout << std::hex << "Current RIP: 0x" << m_intrinsics->read_rip() << std::endl;
-    std::cout << "teardown has returned to the kernel!!!" << std::endl;
+    std::cout << std::hex << "--------------------------------------------------------" << std::endl;
+    std::cout << "RIP:        : 0x" << m_intrinsics->read_rip() << std::endl;
+    std::cout << "IDT base    : 0x" << idt.base << " limit 0x" << idt.limit << std::endl;
+    std::cout << "GDT base    : 0x" << gdt.base << " limit 0x" << gdt.limit << std::endl;
+    std::cout << "TR Selector : 0x" << m_intrinsics->read_tr() << std::endl;
+    std::cout << "Segment selectors: " << std::endl;
+    std::cout << "ES:         : 0x" << m_intrinsics->read_es() << std::endl;
+    std::cout << "CS:         : 0x" << m_intrinsics->read_cs() << std::endl;
+    std::cout << "SS:         : 0x" << m_intrinsics->read_ss() << std::endl;
+    std::cout << "DS:         : 0x" << m_intrinsics->read_ds() << std::endl;
+    std::cout << "FS:         : 0x" << m_intrinsics->read_fs() << std::endl;
+    std::cout << "GS:         : 0x" << m_intrinsics->read_gs() << std::endl;
+    std::cout << std::dec << "--------------------------------------------------------" << std::endl;
+}
 
-    return vcpu_error::success;
+vcpu_error::type
+vcpu_intel_x64::promote_to_root()
+{
+    if(vcpu_error::success == m_intrinsics->vmcall(0xdeadbeef))
+    {
+        std::cout << "Promoted guest to VMX Root" << std::endl;
+        return vcpu_error::success;
+    }
+    else
+    {
+        std::cout << "Invalid vmcall id" << std::endl;
+        return vcpu_error::success;
+    }
+
+    return vcpu_error::failure;
 }

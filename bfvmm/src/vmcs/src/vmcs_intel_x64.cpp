@@ -661,7 +661,9 @@ vmcs_error::type
 vmcs_intel_x64::write_natural_width_host_state_fields()
 {
     vmwrite(VMCS_HOST_CR0, m_cr0);
-    vmwrite(VMCS_HOST_CR3, m_cr3);
+    vmwrite(VMCS_HOST_CR3, (uint64_t)g_mm->top_level_page_table());
+    std::cout << "NEW CR3: " << g_mm->top_level_page_table() << std::endl;
+    
     vmwrite(VMCS_HOST_CR4, m_cr4);
     vmwrite(VMCS_HOST_TR_BASE, m_tr_base);
 

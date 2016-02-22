@@ -331,7 +331,6 @@ exit_handler_dispatch::handle_task_switch()
 void
 exit_handler_dispatch::handle_cpuid()
 {
-    std::cout << "cpuid grsp:" << std::hex << g_guest_rsp << std::endl;
     guest_cpuid();
     advance_rip();
 }
@@ -365,78 +364,32 @@ exit_handler_dispatch::handle_rsm()
 { unimplemented_handler(); }
 
 void
-exit_handler_dispatch::dump_guest_cpu_info()
-{
-    uint64_t cs_selector = 0;
-    uint64_t ds_selector = 0;
-    uint64_t es_selector = 0;
-    uint64_t fs_selector = 0;
-    uint64_t gs_selector = 0;
-    uint64_t ss_selector = 0;
-
-    uint64_t ldtr_selector = 0;
-    uint64_t tr_selector = 0;
-
-    uint64_t g_gdt_base = 0;
-    uint64_t g_gdt_limit = 0;
-
-    uint64_t g_idt_base = 0;
-    uint64_t g_idt_limit = 0;
-
-    m_intrinsics->vmread(VMCS_GUEST_CS_SELECTOR, &cs_selector);
-    m_intrinsics->vmread(VMCS_GUEST_DS_SELECTOR, &ds_selector);
-    m_intrinsics->vmread(VMCS_GUEST_ES_SELECTOR, &es_selector);
-    m_intrinsics->vmread(VMCS_GUEST_FS_SELECTOR, &fs_selector);
-    m_intrinsics->vmread(VMCS_GUEST_GS_SELECTOR, &gs_selector);
-    m_intrinsics->vmread(VMCS_GUEST_SS_SELECTOR, &ss_selector);
-
-    m_intrinsics->vmread(VMCS_GUEST_LDTR_SELECTOR, &ldtr_selector);
-    m_intrinsics->vmread(VMCS_GUEST_TR_SELECTOR, &tr_selector);
-
-    std::cout << std::hex << std::endl;
-    std::cout << "GDT base : 0x" << m_intrinsics->vmread(VMCS_GUEST_GDTR_BASE) << " limit: 0x" << m_intrinsics->vmread(VMCS_GUEST_GDTR_LIMIT) << std::endl;
-    std::cout << "IDT base : 0x" << m_intrinsics->vmread(VMCS_GUEST_IDTR_BASE) << " limit: 0x" << m_intrinsics->vmread(VMCS_GUEST_IDTR_LIMIT) << std::endl;
-    std::cout << std::hex << "Guest TR register: 0x" << m_intrinsics->vmread(VMCS_GUEST_TR_SELECTOR) << " host TR: 0x" << m_intrinsics->read_tr() << std::endl;
-    std::cout << "cs_selector : 0x" << cs_selector << std::endl;
-    std::cout << "ds_selector : 0x" << ds_selector << std::endl;
-    std::cout << "es_selector : 0x" << es_selector << std::endl;
-    std::cout << "fs_selector : 0x" << fs_selector << std::endl;
-    std::cout << "gs_selector : 0x" << gs_selector << std::endl;
-    std::cout << "ss_selector : 0x" << ss_selector << std::endl;
-    std::cout << std::dec << std::endl;
-
-    spin_wait();
-    spin_wait();
-    spin_wait();
-    spin_wait();
-}
-
-void
 exit_handler_dispatch::handle_vmcall()
 {
-    gdt_t g_gdt = { 0 };
-    idt_t g_idt = { 0 };
-    dump_guest_cpu_info();
-    std::cout << std::dec << __LINE__ << std::endl;
-    std::cout << "About to promote!" << std::endl;
-    //m_intrinsics->write_cs(m_intrinsics->vmread(VMCS_GUEST_CS_SELECTOR));
-    //m_intrinsics->write_ss(m_intrinsics->vmread(VMCS_GUEST_SS_SELECTOR));
-    g_gdt.base = m_intrinsics->vmread(VMCS_GUEST_GDTR_BASE);
-    g_gdt.limit = m_intrinsics->vmread(VMCS_GUEST_GDTR_LIMIT);
-    g_idt.base = m_intrinsics->vmread(VMCS_GUEST_IDTR_BASE);
-    g_idt.limit = m_intrinsics->vmread(VMCS_GUEST_IDTR_LIMIT);
-
-    g_vcm->stop(0);
-    std::cout << std::dec << __LINE__ << std::endl;
-    advance_rip();
-    //m_intrinsics->write_idt(&g_idt);
-    //m_intrinsics->write_gdt(&g_gdt);
-    std::cout << std::dec << __LINE__ << std::endl;    spin_wait();
-    guest_cpuid();
-//    promote_vmcs_to_root();
-    std::cout << std::endl << std::endl;
-    dump_guest_cpu_info();
-    std::cout << std::dec << __PRETTY_FUNCTION__ << __LINE__ << std::endl;    spin_wait();
+    if(g_guest_rax == 0xdeadbeef)
+    {
+        m_intrinsics->write_es(m_intrinsics->vmread(VMCS_GUEST_ES_SELECTOR));
+        m_intrinsics->write_ds(m_intrinsics->vmread(VMCS_GUEST_DS_SELECTOR));
+        m_intrinsics->write_fs(m_intrinsics->vmread(VMCS_GUEST_FS_SELECTOR));
+        m_intrinsics->write_gs(m_intrinsics->vmread(VMCS_GUEST_GS_SELECTOR));
+        m_intrinsics->write_msr(IA32_EFER_MSR, m_intrinsics->vmread(VMCS_GUEST_IA32_EFER_FULL));
+        m_intrinsics->write_msr(IA32_PAT_MSR, m_intrinsics->vmread(VMCS_GUEST_IA32_PAT_FULL));
+        m_intrinsics->write_msr(IA32_SYSENTER_CS_MSR, m_intrinsics->vmread(VMCS_GUEST_IA32_SYSENTER_CS));
+        m_intrinsics->write_msr(IA32_FS_BASE_MSR, m_intrinsics->vmread(VMCS_GUEST_FS_BASE));
+        m_intrinsics->write_msr(IA32_GS_BASE_MSR, m_intrinsics->vmread(VMCS_GUEST_GS_BASE));
+        m_intrinsics->write_msr(IA32_SYSENTER_ESP_MSR, m_intrinsics->vmread(VMCS_GUEST_IA32_SYSENTER_ESP));
+        m_intrinsics->write_msr(IA32_SYSENTER_EIP_MSR, m_intrinsics->vmread(VMCS_GUEST_IA32_SYSENTER_EIP));
+        m_intrinsics->write_cr3(m_intrinsics->vmread(VMCS_GUEST_CR3));
+        g_vcm->stop(0);
+        advance_rip();
+        g_guest_rax = 0x00;
+        promote_vmcs_to_root();
+    }
+    else
+    {
+        g_guest_rax = 0xFFFFFFFFFFFFFFFF;
+        advance_rip();
+    }
 }
 
 void
@@ -469,20 +422,7 @@ exit_handler_dispatch::handle_vmwrite()
 
 void
 exit_handler_dispatch::handle_vmxoff()
-{
-    // For now, we'll use a guest issuing a vmxoff
-    // as a way of them requesting a promotion to
-    // vmx-root operation, and return back to them.
-    // We won't advance RIP after we handle this trap
-    // so the guest will execute vmxoff again, however
-    // it'll be in root mode so the operation should succeed
-
-    unimplemented_handler();
-    //promote_vmcs_to_root();
-    //advance_rip();
-
-    return;
-}
+{ unimplemented_handler(); }
 
 void
 exit_handler_dispatch::handle_vmxon()
@@ -681,14 +621,12 @@ void
 exit_handler_dispatch::handle_rdmsr()
 {
     guest_read_msr();
-    std::cout << "rdmsr rcx[" << g_guest_rcx << "] -- rdx[" <<  g_guest_rdx << "] rax [" << g_guest_rax << "]" << std::endl;
     advance_rip();
 }
 
 void
 exit_handler_dispatch::handle_wrmsr()
 {
-    std::cout << "wrmsr rcx[" << g_guest_rcx << "] -- rdx[" <<  g_guest_rdx << "] rax [" << g_guest_rax << "]" << std::endl;
     guest_write_msr();
     advance_rip();
 }
