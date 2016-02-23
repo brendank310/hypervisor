@@ -295,6 +295,10 @@ private:
 
     friend class vmcs_ut;
 
+    vmcs_error::type isolate_host();
+    idt_t *m_idt_iso;
+    gdt_t *m_gdt_iso;
+
     uint16_t m_es;
     uint16_t m_cs;
     uint16_t m_ss;

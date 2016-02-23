@@ -39,6 +39,7 @@ struct vmcs_region
 // =============================================================================
 //  Implementation
 // =============================================================================
+static bool g_isolated = false;
 
 vmcs_intel_x64::vmcs_intel_x64(intrinsics_intel_x64 *intrinsics) :
     m_intrinsics(intrinsics)
@@ -207,12 +208,63 @@ vmcs_intel_x64::launch()
     // go through a series of error checks to identify why the failure
     // occured. If the launch succeeds, we should continue execution as
     // normal, not this code will be in a virtual machine when finished.
+    isolate_host();
 
+    dump_vmcs();
+    
     ret = launch_vmcs();
     if (ret != vmcs_error::success)
          return ret;
 
     return vmcs_error::success;
+}
+
+vmcs_error::type
+vmcs_intel_x64::isolate_host()
+{
+  if(m_valid == false)
+    {
+      std::cout << "unable to isolate host, a failure invalidated the VMCS, or it is already isolated.";
+      std::cout << std::endl;
+
+      return vmcs_error::failure;
+    }
+
+  if(g_isolated == true)
+    {
+      std::cout << "Host is already isolated. Those isolation parameters should be reused" << std::endl;
+      return vmcs_error::success;
+    }
+
+  // Provide an isolate page table, setup by the memory manager
+  vmwrite(VMCS_HOST_CR3, (uint64_t)g_mm->top_level_page_table());
+
+  // Copy over the GDT and IDT
+  m_gdt_iso = (gdt_t *)g_mm->malloc(m_gdt_reg.limit + 1);
+  uint8_t *gdt_tmp_dst = (uint8_t*)m_gdt_iso;
+  uint8_t *gdt_tmp_src = (uint8_t*)m_gdt_reg.base;
+  for(int i = 0; i < m_gdt_reg.limit + 1; i++)
+  {
+    std::cout << std::hex << (uint32_t)gdt_tmp_src[i] << " ";
+    gdt_tmp_dst[i] = gdt_tmp_src[i];
+  }
+  std::cout << std::dec << std::endl;
+  m_idt_iso = (idt_t *)g_mm->malloc(m_idt_reg.limit + 1);
+  uint8_t *idt_tmp_dst = (uint8_t*)m_idt_iso;
+  uint8_t *idt_tmp_src = (uint8_t*)m_idt_reg.base;
+  for(int i = 0; i < m_idt_reg.limit + 1; i++)
+  {
+    std::cout << std::hex << (uint32_t)idt_tmp_src[i] << " ";
+    idt_tmp_dst[i] = idt_tmp_src[i];
+  }
+  std::cout << std::dec << std::endl;
+  vmwrite(VMCS_HOST_GDTR_BASE, (uint64_t)g_mm->virt_to_phys(m_gdt_iso));
+  vmwrite(VMCS_HOST_IDTR_BASE, (uint64_t)g_mm->virt_to_phys(m_idt_iso));
+
+  std::cout << std::hex;
+  std::cout << "isolated gdt: 0x" << (uint64_t)m_gdt_iso << " idt: 0x" << (uint64_t)m_idt_iso << std::endl;
+  std::cout << std::dec;
+  g_isolated = true;
 }
 
 vmcs_error::type
@@ -661,9 +713,8 @@ vmcs_error::type
 vmcs_intel_x64::write_natural_width_host_state_fields()
 {
     vmwrite(VMCS_HOST_CR0, m_cr0);
-    vmwrite(VMCS_HOST_CR3, (uint64_t)g_mm->top_level_page_table());
-    std::cout << "NEW CR3: " << g_mm->top_level_page_table() << std::endl;
-    
+//    vmwrite(VMCS_HOST_CR3, m_cr3);
+
     vmwrite(VMCS_HOST_CR4, m_cr4);
     vmwrite(VMCS_HOST_TR_BASE, m_tr_base);
 
