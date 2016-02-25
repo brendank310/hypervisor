@@ -62,7 +62,6 @@ out_of_memory(void)
 #ifdef CROSS_COMPILED
 
     const char *msg = "FATAL ERROR: Out of memory!!!";
-
     write(0, msg, strlen(msg));
     abort();
 
@@ -259,6 +258,12 @@ memory_manager::phys_to_virt(void *phys)
     return (void *)(upper | lower);
 }
 
+uint64_t 
+memory_manager::top_level_page_table(void)
+{
+    return (uint64_t)virt_to_phys(pager.pml4());
+}
+
 bool
 memory_manager::is_block_aligned(int64_t block, int64_t alignment)
 {
@@ -312,11 +317,8 @@ memory_manager::add_mdl(struct memory_descriptor *mdl, int64_t num)
     for (auto i = 0; i < num; i++)
     {
         const auto &md = mdl[i];
-        //bferror << md.phys << "<-->" << md.virt << bfendl;
         pager.add_entry(md.phys, md.virt);
     }
-
-    pager.dump_page_tables(mdl[0].virt);
 
     return MEMORY_MANAGER_SUCCESS;
 }

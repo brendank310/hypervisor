@@ -29,8 +29,8 @@ SUBDIRS += debug_ring
 SUBDIRS += serial
 SUBDIRS += vmm
 SUBDIRS += vmcs
-SUBDIRS += exit_handler
 SUBDIRS += vcpu
+SUBDIRS += exit_handler
 SUBDIRS += entry
 
 ################################################################################

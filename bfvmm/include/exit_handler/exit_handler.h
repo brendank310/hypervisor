@@ -57,7 +57,7 @@ extern "C"
     ///
     /// Abandon the host state, and jump into the guest state
     /// from the host.
-    void promote_vmcs_to_root(void);
+    void promote_vmcs_to_root(uint64_t guest_cr3, uint64_t gdtr_ptr);
 
     /// Guest State
     ///

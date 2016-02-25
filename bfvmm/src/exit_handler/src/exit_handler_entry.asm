@@ -72,6 +72,9 @@ section .text
 
 ;; VMCS Promotion
 promote_vmcs_to_root:
+    mov cr3, rdi
+    lgdt [rsi] 
+
     mov rax, [g_guest_rip]
     mov rsp, [g_guest_rsp]
     push rax

@@ -190,7 +190,7 @@ vmcs_intel_x64::launch()
     // state of this object so that you can check to see if there are any
     // issues.
 
-    // dump_vmcs();
+    dump_vmcs();
     // dump_state();
 
     // The last step is to launch the VMCS. If the launch fails, we must
@@ -287,6 +287,8 @@ vmcs_intel_x64::save_state()
 vmcs_error::type
 vmcs_intel_x64::unlaunch()
 {
+    gdt_t gdtr = { 0 };
+
     m_intrinsics->write_es(vmread(VMCS_GUEST_ES_SELECTOR));
     m_intrinsics->write_ds(vmread(VMCS_GUEST_DS_SELECTOR));
     m_intrinsics->write_fs(vmread(VMCS_GUEST_FS_SELECTOR));
@@ -298,9 +300,11 @@ vmcs_intel_x64::unlaunch()
     m_intrinsics->write_msr(IA32_GS_BASE_MSR, vmread(VMCS_GUEST_GS_BASE));
     m_intrinsics->write_msr(IA32_SYSENTER_ESP_MSR, vmread(VMCS_GUEST_IA32_SYSENTER_ESP));
     m_intrinsics->write_msr(IA32_SYSENTER_EIP_MSR, vmread(VMCS_GUEST_IA32_SYSENTER_EIP));
-    m_intrinsics->write_cr3(vmread(VMCS_GUEST_CR3));
 
-    promote_vmcs_to_root();
+    gdtr.base = vmread(VMCS_GUEST_GDTR_BASE);
+    gdtr.limit = vmread(VMCS_GUEST_GDTR_LIMIT);
+
+    promote_vmcs_to_root(vmread(VMCS_GUEST_CR3), (uint64_t)&gdtr);
 
     // This doesn't actually get returned
     return vmcs_error::success;
@@ -590,6 +594,20 @@ vmcs_intel_x64::write_32bit_guest_state_fields()
     vmwrite(VMCS_GUEST_LDTR_LIMIT, m_ldtr_limit);
     vmwrite(VMCS_GUEST_TR_LIMIT, m_tr_limit);
 
+    // uint64_t *gdt_entry_t = (uint64_t*)m_gdt_reg.base;
+    // uint64_t *idt_entry_t = (uint64_t*)m_idt_reg.base;
+    // for(auto i = 0; i < ((m_gdt_reg.limit + 1)>>3); i++)
+    // {
+    //     std::cout << std::hex << "gdt_entry_t[" << i << "] : 0x" << gdt_entry_t[i] << std::endl;
+    // }
+
+    // std::cout << std::endl << "======================================" << std::endl;
+
+    // for(auto i = 0; i < ((m_idt_reg.limit + 1)>>3); i++)
+    // {
+    //     std::cout << std::hex << "idt_entry_t[" << i << "] : 0x" << idt_entry_t[i] << std::endl;
+    // }
+
     vmwrite(VMCS_GUEST_GDTR_LIMIT, m_gdt_reg.limit);
     vmwrite(VMCS_GUEST_IDTR_LIMIT, m_idt_reg.limit);
 
@@ -666,16 +684,45 @@ vmcs_intel_x64::write_natural_width_guest_state_fields()
     return vmcs_error::success;
 }
 
+static uint64_t gdt_table[4];
+
+inline uint64_t create_gdt_entry(uint32_t base, uint32_t limit, uint8_t type)
+{
+    uint64_t gdt_entry = 0;
+    uint8_t *sub_entry = (uint8_t*)&gdt_entry;
+
+    // Paging granularity
+    sub_entry[6] = 0xc0;
+
+    sub_entry[0] = limit & 0xff;
+    sub_entry[1] = (limit >> 8) & 0xff;
+    sub_entry[6] |= (limit >> 16) & 0xf;
+
+    sub_entry[2] = base & 0xff;
+    sub_entry[3] = (base >> 8) & 0xff;
+    sub_entry[4] = (base >> 16) & 0xff;
+    sub_entry[7] = (base >> 24) & 0xff;
+
+    sub_entry[5] = type;
+
+    return gdt_entry;
+}
+
 vmcs_error::type
 vmcs_intel_x64::write_natural_width_host_state_fields()
 {
     vmwrite(VMCS_HOST_CR0, m_cr0);
-    vmwrite(VMCS_HOST_CR3, m_cr3);
+    vmwrite(VMCS_HOST_CR3, g_mm->top_level_page_table());
     vmwrite(VMCS_HOST_CR4, m_cr4);
 
     vmwrite(VMCS_HOST_TR_BASE, m_tr_base);
 
-    vmwrite(VMCS_HOST_GDTR_BASE, m_gdt_reg.base);
+    gdt_table[0] = 0;
+    gdt_table[1] = create_gdt_entry(0, 0xffffffff, 0x9a);
+    gdt_table[2] = create_gdt_entry(0, 0xffffffff, 0x92);
+    gdt_table[4] = 0;
+
+    vmwrite(VMCS_HOST_GDTR_BASE, (uint64_t)gdt_table);
     vmwrite(VMCS_HOST_IDTR_BASE, m_idt_reg.base);
 
     vmwrite(VMCS_HOST_RSP, (uint64_t)exit_handler_stack());

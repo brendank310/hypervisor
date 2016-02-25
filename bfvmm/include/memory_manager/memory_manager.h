@@ -131,6 +131,16 @@ public:
     ///
     virtual void *phys_to_virt(void *phys);
 
+    /// Top level page table physical address
+    ///
+    /// Get the top level page table address, as a uint64_t. In x64 land,
+    /// this gets written to the cr3 register, and is the physical address
+    /// of the pml4.
+    ///
+    /// @return top level page table physical address
+    ///
+    virtual uint64_t top_level_page_table(void);
+
     /// Adds Memory Descriptor List
     ///
     /// Adds a memory descriptor list to the memory manager. The memory
