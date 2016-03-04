@@ -684,30 +684,6 @@ vmcs_intel_x64::write_natural_width_guest_state_fields()
     return vmcs_error::success;
 }
 
-static uint64_t gdt_table[4];
-
-inline uint64_t create_gdt_entry(uint32_t base, uint32_t limit, uint8_t type)
-{
-    uint64_t gdt_entry = 0;
-    uint8_t *sub_entry = (uint8_t*)&gdt_entry;
-
-    // Paging granularity
-    sub_entry[6] = 0xc0;
-
-    sub_entry[0] = limit & 0xff;
-    sub_entry[1] = (limit >> 8) & 0xff;
-    sub_entry[6] |= (limit >> 16) & 0xf;
-
-    sub_entry[2] = base & 0xff;
-    sub_entry[3] = (base >> 8) & 0xff;
-    sub_entry[4] = (base >> 16) & 0xff;
-    sub_entry[7] = (base >> 24) & 0xff;
-
-    sub_entry[5] = type;
-
-    return gdt_entry;
-}
-
 vmcs_error::type
 vmcs_intel_x64::write_natural_width_host_state_fields()
 {

@@ -28,37 +28,6 @@
 #include <exception.h>
 
 // -----------------------------------------------------------------------------
-// Internal classes
-// -----------------------------------------------------------------------------
-class gdt {
-public:
-    /// Constructor
-    /// @param size Number of entries for the GDT
-    ///
-    gdt(uint16_t size = 4);
-
-    /// Destructor
-    ///
-    virtual ~gdt() {}
-
-    /// Create GDT Entry
-    ///
-    /// @param index Index of the GDT to add the entry to
-    /// @param base  Base address of the segment
-    /// @param limit Size of the segment 
-    /// @param type  Permissions on the segment
-    ///
-    void add_gdt_entry(uint16_t index, uint32_t base, uint32_t limit, uint8_t type);
-
-    /// Remove GDT Entry
-    ///
-    /// @param index Index of the GDT entry to remove
-    /// 
-    void remove_gdt_entry(uint16_t index);
-
-};
-
-// -----------------------------------------------------------------------------
 // Definition
 // -----------------------------------------------------------------------------
 
@@ -97,4 +66,4 @@ namespace bfn
 
 }
 
-#endif
+#endif // ARCH_RESOURCES_INTEL_X64__H

@@ -174,7 +174,6 @@ fi
 if [ ! -d "gcc" ]; then
     rm -Rf completed_build_gcc
     rm -Rf completed_patch_gcc
-    wget --no-check-certificate $GCC_URL
     tar xvf gcc-*.tar.bz2
     mv gcc-*/ gcc
 fi
