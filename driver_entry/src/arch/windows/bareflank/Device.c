@@ -16,6 +16,7 @@ Environment:
 
 #include "driver.h"
 #include "device.tmh"
+#include <debug.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, bareflankCreateDevice)
@@ -53,8 +54,10 @@ Return Value:
 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
 
-    status = WdfDeviceCreate(&DeviceInit, &deviceAttributes, &device);
+	TRACE();
 
+    status = WdfDeviceCreate(&DeviceInit, &deviceAttributes, &device);
+	
     if (NT_SUCCESS(status)) {
         //
         // Get a pointer to the device context structure that we just associated

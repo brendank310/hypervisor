@@ -51,6 +51,10 @@
 
 #ifdef KERNEL
 #ifdef _WIN32
+#define INFO(...) DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, __VA_ARGS__)
+#define DEBUG(...) DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "[" BAREFLANK_NAME "]: " __VA_ARGS__)
+#define ALERT(...) DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,"[" BAREFLANK_NAME " ERROR]: " __VA_ARGS__)
+#define TRACE() DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "- %s::%d\r\n", __func__, __LINE__)
 #endif
 #endif
 

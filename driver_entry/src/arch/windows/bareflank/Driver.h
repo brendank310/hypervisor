@@ -18,6 +18,7 @@ Environment:
 
 #include <ntddk.h>
 #include <wdf.h>
+#include <driver_entry_interface.h>
 
 #include "device.h"
 #include "queue.h"
@@ -31,6 +32,9 @@ EXTERN_C_START
 
 DRIVER_INITIALIZE DriverEntry;
 EVT_WDF_DRIVER_DEVICE_ADD bareflankEvtDeviceAdd;
+EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL bareflankEvtIoDeviceControl;
+EVT_WDF_DEVICE_FILE_CREATE bareflankEvtDeviceFileCreate;
+EVT_WDF_FILE_CLOSE bareflankEvtDeviceFileClose;
 EVT_WDF_OBJECT_CONTEXT_CLEANUP bareflankEvtDriverContextCleanup;
 
 EXTERN_C_END

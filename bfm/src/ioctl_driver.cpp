@@ -112,7 +112,7 @@ ioctl_driver::load_vmm(const std::shared_ptr<file> &f,
     auto cor1 = commit_or_rollback([&]
     { unload_vmm(ctl); });
 
-    for (const auto &module : split(f->read(clp->modules()), '\n'))
+    for (const auto &module : split(f->read(clp->modules()), ','))
     {
         auto trimmed = trim(module);
 

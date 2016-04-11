@@ -23,8 +23,19 @@
 #define IOCTL_H
 
 #include <memory>
+#include <string>
 #include <stdint.h>
 #include <driver_entry_interface.h>
+
+#ifdef _WIN32
+#ifdef LIBBFM_EXPORTS
+#define LIBBFM_API __declspec(dllexport)
+#else
+#define LIBBFM_API __declspec(dllimport)
+#endif
+#else 
+#define LIBBFM_API
+#endif
 
 /// IOCTL Private Base
 ///
@@ -43,7 +54,7 @@ public:
 /// that for this class to function, the driver entry must be loaded, and
 /// bfm must be executed with the proper permissions.
 ///
-class ioctl
+class LIBBFM_API ioctl
 {
 public:
 

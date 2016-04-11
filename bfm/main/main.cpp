@@ -30,12 +30,14 @@
 #include <ioctl.h>
 #include <ioctl_driver.h>
 
+#ifndef _WIN32
 void
 terminate()
 {
     std::cerr << "FATAL ERROR: terminate called" << std::endl;
     abort();
 }
+#endif
 
 void
 new_handler()

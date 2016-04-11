@@ -25,13 +25,23 @@
 #include <string>
 #include <fstream>
 
+#ifdef _WIN32
+#ifdef LIBBFM_EXPORTS
+#define LIBBFM_API __declspec(dllexport)
+#else
+#define LIBBFM_API __declspec(dllimport)
+#endif
+#else 
+#define LIBBFM_API
+#endif
+
 /// File
 ///
 /// This class is responsible for working with a file. Specifically, this
 /// class wraps calls to ifstream and fstream to simplify their interface
 /// as well as provide an implementation for the rest of the Bareflank
 /// Manager, such that testing is eaiser.
-class file
+class LIBBFM_API file
 {
 public:
 

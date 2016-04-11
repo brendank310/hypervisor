@@ -16,10 +16,203 @@ Environment:
 
 #include "driver.h"
 #include "queue.tmh"
-
+#include <common.h>
+#include <platform.h>
+#include <debug.h>
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, bareflankQueueInitialize)
 #endif
+
+int64_t g_module_length = 0;
+
+int64_t g_num_files = 0;
+char *files[MAX_NUM_MODULES] = { 0 };
+
+/* Private IOCTL methods, setting up for common calls */
+
+static long
+ioctl_add_module(char *file)
+{
+	int64_t ret;
+	char *buf;
+
+	if (g_num_files >= MAX_NUM_MODULES)
+	{
+		ALERT("IOCTL_ADD_MODULE: too many modules have been loaded\n");
+		return BF_IOCTL_FAILURE;
+	}
+
+	buf = platform_alloc_exec(g_module_length);
+	if (buf == NULL)
+	{
+		ALERT("IOCTL_ADD_MODULE: failed to allocate memory for the module\n");
+		return BF_IOCTL_FAILURE;
+	}
+	DEBUG("g_module_length: %d\r\n", g_module_length);
+	platform_memcpy(buf, file, g_module_length);
+
+	ret = common_add_module(buf, g_module_length);
+	if (ret != BF_SUCCESS)
+	{
+		ALERT("IOCTL_ADD_MODULE: failed to add module\n");
+		goto failed;
+	}
+
+	files[g_num_files] = buf;
+	g_num_files++;
+
+	DEBUG("IOCTL_ADD_MODULE: succeeded\n");
+	return BF_IOCTL_SUCCESS;
+
+failed:
+
+	platform_free_exec(buf, 0);
+
+	DEBUG("IOCTL_ADD_MODULE: failed\n");
+	return BF_IOCTL_FAILURE;
+}
+
+static long
+ioctl_add_module_length(int64_t *len)
+{
+	if (len == 0)
+	{
+		ALERT("IOCTL_ADD_MODULE_LENGTH: failed with len == NULL\n");
+		return BF_IOCTL_FAILURE;
+	}
+
+	g_module_length = *len;
+
+	DEBUG("g_module_length ----- %d\r\n", *len);
+
+	DEBUG("IOCTL_ADD_MODULE_LENGTH: succeeded\n");
+	return BF_IOCTL_SUCCESS;
+}
+
+static long
+ioctl_unload_vmm(void)
+{
+	int64_t i;
+	int64_t ret;
+	long status = BF_IOCTL_SUCCESS;
+
+	ret = common_unload_vmm();
+	if (ret != BF_SUCCESS)
+	{
+		ALERT("IOCTL_UNLOAD_VMM: failed to unload vmm: %d\n", ret);
+		status = BF_IOCTL_FAILURE;
+	}
+
+	for (i = 0; i < g_num_files; i++)
+		platform_free_exec(files[i], 0);
+
+	g_num_files = 0;
+
+	if (status == BF_IOCTL_SUCCESS)
+		DEBUG("IOCTL_UNLOAD_VMM: succeeded\n");
+
+	return status;
+}
+
+static long
+ioctl_load_vmm(void)
+{
+	int64_t ret;
+
+	ret = common_load_vmm();
+	if (ret != BF_SUCCESS)
+	{
+		ALERT("IOCTL_LOAD_VMM: failed to load vmm: %d\n", ret);
+		goto failure;
+	}
+
+	DEBUG("IOCTL_LOAD_VMM: succeeded\n");
+	return BF_IOCTL_SUCCESS;
+
+failure:
+
+	ioctl_unload_vmm();
+	return BF_IOCTL_FAILURE;
+}
+
+static long
+ioctl_stop_vmm(void)
+{
+	int64_t ret;
+	long status = BF_IOCTL_SUCCESS;
+
+	ret = common_stop_vmm();
+
+	if (ret != BF_SUCCESS)
+	{
+		ALERT("IOCTL_STOP_VMM: failed to stop vmm: %d\n", ret);
+		status = BF_IOCTL_FAILURE;
+	}
+
+	if (status == BF_IOCTL_SUCCESS)
+		DEBUG("IOCTL_STOP_VMM: succeeded\n");
+
+	return status;
+}
+
+static long
+ioctl_start_vmm(void)
+{
+	int64_t ret;
+
+	ret = common_start_vmm();
+	if (ret != BF_SUCCESS)
+	{
+		ALERT("IOCTL_START_VMM: failed to start vmm: %d\n", ret);
+		goto failure;
+	}
+
+	DEBUG("IOCTL_START_VMM: succeeded\n");
+	return BF_IOCTL_SUCCESS;
+
+failure:
+
+	ioctl_stop_vmm();
+	return BF_IOCTL_FAILURE;
+}
+
+static long
+ioctl_dump_vmm(struct debug_ring_resources_t *user_drr)
+{
+	int64_t ret;
+	struct debug_ring_resources_t *drr = 0;
+
+	ret = common_dump_vmm(&drr);
+	if (ret != BF_SUCCESS)
+	{
+		ALERT("IOCTL_DUMP_VMM: failed to dump vmm: %d\n", ret);
+		return BF_IOCTL_FAILURE;
+	}
+
+	platform_memcpy(user_drr, drr, sizeof(struct debug_ring_resources_t));
+
+	DEBUG("IOCTL_DUMP_VMM: succeeded\n");
+	return BF_IOCTL_SUCCESS;
+}
+
+static long
+ioctl_vmm_status(int64_t *status)
+{
+	int64_t vmm_status = common_vmm_status();
+
+	if (status == 0)
+	{
+		ALERT("IOCTL_VMM_STATUS: failed with status == NULL\n");
+		return BF_IOCTL_FAILURE;
+	}
+
+	//platform_memcpy(status, &vmm_status, sizeof(int64_t));
+	*status = vmm_status;
+	DEBUG("IOCTL_VMM_STATUS: succeeded %"PRId64"\n", vmm_status);
+	return BF_IOCTL_SUCCESS;
+}
+
+
 
 NTSTATUS
 bareflankQueueInitialize(
@@ -114,14 +307,85 @@ Return Value:
 
 --*/
 {
+	uint32_t rc = 0;
+	PVOID in = 0, out = 0;
+	size_t in_size = 0, out_size = 0;
+
     TraceEvents(TRACE_LEVEL_INFORMATION, 
                 TRACE_QUEUE, 
                 "%!FUNC! Queue 0x%p, Request 0x%p OutputBufferLength %d InputBufferLength %d IoControlCode %d", 
                 Queue, Request, (int) OutputBufferLength, (int) InputBufferLength, IoControlCode);
 
-    WdfRequestComplete(Request, STATUS_SUCCESS);
+	if (InputBufferLength != 0)
+	{
+		TRACE();
+		rc = WdfRequestRetrieveInputBuffer(Request, InputBufferLength, &in, &in_size);
+
+		DEBUG("insize: %d\r\n", in_size);
+
+		if (!NT_SUCCESS(rc))
+		{
+			TRACE();
+			goto FAIL_IOCTL;
+		}
+	}
+
+	if (OutputBufferLength != 0)
+	{
+		TRACE();
+		rc = WdfRequestRetrieveOutputBuffer(Request, OutputBufferLength, &out, &out_size);
+
+		if (!NT_SUCCESS(rc))
+		{
+			TRACE();
+			goto FAIL_IOCTL;
+		}
+	}
+		
+	switch (IoControlCode)
+	{
+		case IOCTL_ADD_MODULE:
+			rc = ioctl_add_module((char *)in);
+			break;
+		case IOCTL_ADD_MODULE_LENGTH:
+			rc = ioctl_add_module_length((int64_t *)in);
+			break;
+		case IOCTL_LOAD_VMM:
+			rc = ioctl_load_vmm();
+			break;
+		case IOCTL_UNLOAD_VMM:
+			rc = ioctl_unload_vmm();
+			break;
+		case IOCTL_START_VMM:
+			rc = ioctl_start_vmm();
+			break;
+		case IOCTL_STOP_VMM:
+			rc = ioctl_stop_vmm();
+			break;
+		case IOCTL_DUMP_VMM:
+			rc = ioctl_dump_vmm((struct debug_ring_resources_t *)out);
+			break;
+		case IOCTL_VMM_STATUS:
+			rc = ioctl_vmm_status((int64_t *)out);
+			break;
+		default:
+			rc = (uint32_t) STATUS_INVALID_PARAMETER;
+			break;
+	}
+
+	if (OutputBufferLength != 0)
+	{
+		WdfRequestSetInformation(Request, out_size);
+	}
+
+    WdfRequestComplete(Request, rc);
 
     return;
+
+FAIL_IOCTL:
+	WdfRequestComplete(Request, STATUS_INVALID_PARAMETER);
+
+	return;
 }
 
 VOID

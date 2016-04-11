@@ -19,41 +19,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <file.h>
-#include <exception.h>
-#include <iostream>
-file::file()
+#ifndef IOCTL_PRIVATE_H
+#define IOCTL_PRIVATE_H
+
+#include <ioctl.h>
+
+class ioctl_private : public ioctl_private_base
 {
-}
+public:
+    ioctl_private();
+    virtual ~ioctl_private();
 
-file::~file()
-{
-}
+    virtual void open();
+    virtual void call_ioctl_add_module_length(int64_t len);
+    virtual void call_ioctl_add_module(const char *data);
+    virtual void call_ioctl_load_vmm();
+    virtual void call_ioctl_unload_vmm();
+    virtual void call_ioctl_start_vmm();
+    virtual void call_ioctl_stop_vmm();
+    virtual void call_ioctl_dump_vmm(debug_ring_resources_t *drr);
+    virtual void call_ioctl_vmm_status(int64_t *status);
 
-static bool once = false;
+private:
+	HANDLE fd;
+};
 
-std::string
-file::read(const std::string &filename) const
-{
-    std::fstream fstream;
-
-	if (!once)
-	{
-		fstream.open(filename, std::ios_base::in);
-		once = true;
-	}
-	else
-	{
-		fstream.open(filename, std::ios_base::in|std::ios_base::binary);
-	}
-    
-    if (fstream.good() == false)
-        throw invalid_file(filename);
-
-
-	auto contents = std::string(std::istreambuf_iterator<char>(fstream),
-		                       std::istreambuf_iterator<char>());
-
-    fstream.close();
-    return contents;
-}
+#endif

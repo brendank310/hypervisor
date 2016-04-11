@@ -22,6 +22,16 @@
 #ifndef IOCTL_DRIVER_H
 #define IOCTL_DRIVER_H
 
+#ifdef _WIN32
+#ifdef LIBBFM_EXPORTS
+#define LIBBFM_API __declspec(dllexport)
+#else
+#define LIBBFM_API __declspec(dllimport)
+#endif
+#else 
+#define LIBBFM_API
+#endif
+
 #include <command_line_parser.h>
 #include <file.h>
 #include <ioctl.h>
@@ -36,7 +46,7 @@
 ///
 /// If certain conditions are not meet, the IOCTL driver will error out on
 /// it's attempt to process, and return an error.
-class ioctl_driver
+class LIBBFM_API ioctl_driver
 {
 public:
 

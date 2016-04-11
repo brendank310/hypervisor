@@ -38,14 +38,22 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\..\bfdrivers\src\common.c" />
+    <ClCompile Include="..\..\..\..\..\bfelf_loader\src\bfelf_loader.c" />
     <ClCompile Include="Device.c" />
     <ClCompile Include="Driver.c" />
+    <ClCompile Include="platform.c" />
     <ClCompile Include="Queue.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\bfdrivers\include\common.h" />
+    <ClInclude Include="..\..\..\..\..\bfdrivers\include\debug.h" />
+    <ClInclude Include="..\..\..\..\..\bfdrivers\include\platform.h" />
+    <ClInclude Include="..\..\..\..\..\bfdrivers\include\types.h" />
+    <ClInclude Include="..\..\..\..\..\bfelf_loader\include\bfelf_loader.h" />
+    <ClInclude Include="..\..\..\..\..\include\driver_entry_interface.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Driver.h" />
-    <ClInclude Include="Public.h" />
     <ClInclude Include="Queue.h" />
     <ClInclude Include="Trace.h" />
   </ItemGroup>
@@ -142,6 +150,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>C:\Users\user\hypervisor\bfelf_loader\include;C:\Users\user\hypervisor\bfdrivers\include;C:\Users\user\hypervisor\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
@@ -180,6 +189,7 @@
       <WppRecorderEnabled>true</WppRecorderEnabled>
       <WppScanConfigurationData Condition="'%(ClCompile.ScanConfigurationData)' == ''">trace.h</WppScanConfigurationData>
       <WppKernelMode>true</WppKernelMode>
+      <PreprocessorDefinitions>KERNEL=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

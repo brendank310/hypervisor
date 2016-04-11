@@ -25,6 +25,16 @@
 #include <vector>
 #include <string>
 
+#ifdef _WIN32
+#ifdef LIBBFM_EXPORTS
+#define LIBBFM_API __declspec(dllexport)
+#else
+#define LIBBFM_API __declspec(dllimport)
+#endif
+#else 
+#define LIBBFM_API
+#endif
+
 namespace command_line_parser_command
 {
 enum type
@@ -52,7 +62,7 @@ enum type
 /// with the cmd() function to determine if the command line args provided
 /// make sense, as well as which command to execute.
 ///
-class command_line_parser
+class LIBBFM_API command_line_parser
 {
 public:
 

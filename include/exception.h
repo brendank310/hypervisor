@@ -179,7 +179,7 @@ public:
     }
 };
 
-#define driver_inaccessible(a) bfn::driver_inaccessible_error(a)
+#define driver_inaccessible() bfn::driver_inaccessible_error()
 
 // -----------------------------------------------------------------------------
 // IOCTL Failed

@@ -16,6 +16,8 @@ Environment:
 
 #include "driver.h"
 #include "driver.tmh"
+#include <intrin.h>
+#include <debug.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (INIT, DriverEntry)
@@ -65,14 +67,15 @@ Return Value:
     WPP_INIT_TRACING( DriverObject, RegistryPath );
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
-
+	
+	TRACE();
     //
     // Register a cleanup callback so that we can call WPP_CLEANUP when
     // the framework driver object is deleted during driver unload.
     //
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     attributes.EvtCleanupCallback = bareflankEvtDriverContextCleanup;
-
+	
     WDF_DRIVER_CONFIG_INIT(&config,
                            bareflankEvtDeviceAdd
                            );
@@ -92,7 +95,7 @@ Return Value:
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
 
-    return status;
+	return status;
 }
 
 NTSTATUS
@@ -125,6 +128,8 @@ Return Value:
 
     PAGED_CODE();
 
+	TRACE();
+
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
 
     status = bareflankCreateDevice(DeviceInit);
@@ -156,6 +161,8 @@ Return Value:
     UNREFERENCED_PARAMETER(DriverObject);
 
     PAGED_CODE ();
+
+	TRACE();
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
 
