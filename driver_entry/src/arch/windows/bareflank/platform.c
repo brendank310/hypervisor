@@ -30,7 +30,7 @@
 void *
 platform_alloc(int64_t len)
 {
-    void *addr = NULL, *addr_remap = NULL;
+	void *addr = NULL;
 
     if (len == 0)
     {
@@ -38,26 +38,11 @@ platform_alloc(int64_t len)
         return addr;
     }
 
-	addr = MmAllocateNonCachedMemory(len);
+	addr = ExAllocatePoolWithTag(NonPagedPool, len, BF_TAG);
+	
+	if(addr) RtlZeroMemory(addr, len);
 
-	PMDL mdl = IoAllocateMdl(addr, (ULONG)len, FALSE, FALSE, NULL);
-
-	MmBuildMdlForNonPagedPool(mdl);
-
-	MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
-
-	DEBUG("%s[%d] - addr: %p size: %d\r\n", __func__, __LINE__, addr, len);
-
-	addr_remap = MmMapLockedPagesSpecifyCache(mdl, KernelMode, MmNonCached, addr, FALSE, 0);
-
-	DEBUG("%d\r\n", MmProtectMdlSystemAddress(mdl, PAGE_EXECUTE_READWRITE));
-
-	DEBUG("%s[%d] - addr: %p size: %d\r\n", __func__, __LINE__, addr_remap, len);
-
-    if (addr_remap == NULL)
-        ALERT("platform_alloc: failed to ExAllocatePoolWithTag mem: %lld\n", len);
-
-    return addr_remap;
+    return addr;
 }
 
 void *
@@ -79,13 +64,9 @@ platform_alloc_exec(int64_t len)
 
 	MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
 
-	DEBUG("%s[%d] - addr: %p size: %d\r\n", __func__, __LINE__, addr, len);
-
 	addr_remap = MmMapLockedPagesSpecifyCache(mdl, KernelMode, MmNonCached, addr, FALSE, 0);
 
 	DEBUG("%d\r\n", MmProtectMdlSystemAddress(mdl, PAGE_EXECUTE_READWRITE));
-
-	DEBUG("%s[%d] - addr: %p size: %d\r\n", __func__, __LINE__, addr_remap, len);
 
 	if (addr_remap == NULL)
 		ALERT("platform_alloc: failed to ExAllocatePoolWithTag mem: %lld\n", len);
@@ -110,21 +91,19 @@ platform_free(void *addr)
         return;
     }
 
-    ExFreePoolWithTag(addr, BF_NX_TAG);
+    ExFreePoolWithTag(addr, BF_TAG);
 }
 
 void
 platform_free_exec(void *addr, int64_t len)
 {
-	(void)len;
-
     if (addr == NULL)
     {
         ALERT("platform_free_exec: invalid address %p\n", addr);
         return;
     }
 
-	ExFreePoolWithTag(addr, BF_TAG);
+	MmFreeNonCachedMemory(addr, len);
 }
 
 void
