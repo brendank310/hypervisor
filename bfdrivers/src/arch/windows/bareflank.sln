@@ -5,9 +5,9 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bareflank", "bareflank.vcxproj", "{AFE6E483-0635-4C28-9A59-DE1722F7D270}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bfm", "..\..\..\..\..\bfm\src\arch\windows\bfm\bfm.vcxproj", "{AF1DD25E-9EF0-47C1-BA67-C5AA19D5A6DB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bfm", "..\..\..\..\bfm\src\arch\windows\bfm\bfm.vcxproj", "{AF1DD25E-9EF0-47C1-BA67-C5AA19D5A6DB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libbfm", "..\..\..\..\..\bfm\src\arch\windows\libbfm\libbfm.vcxproj", "{D258814B-1067-4499-B68C-344302EB6E53}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libbfm", "..\..\..\..\bfm\src\arch\windows\libbfm\libbfm.vcxproj", "{D258814B-1067-4499-B68C-344302EB6E53}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

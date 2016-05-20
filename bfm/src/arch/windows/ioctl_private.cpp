@@ -195,6 +195,13 @@ ioctl_private::call_ioctl_start_vmm()
 {
     if (bf_send_ioctl(fd, IOCTL_START_VMM) < 0)
         throw ioctl_failed(IOCTL_START_VMM);
+
+    // This is a hack for right now, may help to
+    // delay the blue screen by keeping a cr3
+    // from getting scrubbed when the process is
+    // done executing, invalidating all the mappings
+    // the elf loader uses.
+    while (1) Sleep(1);
 }
 
 void
