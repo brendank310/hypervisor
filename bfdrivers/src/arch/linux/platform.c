@@ -33,7 +33,7 @@
 #include <asm/tlbflush.h>
 
 void *
-platform_alloc(int64_t len)
+platform_malloc(int64_t len)
 {
     void *addr = NULL;
 
@@ -51,23 +51,44 @@ platform_alloc(int64_t len)
     return addr;
 }
 
-void *
-platform_alloc_exec(int64_t len)
+int64_t
+platform_mprotect(void *addr, uint64_t len, uint8_t prot)
 {
-    void *addr = NULL;
+    struct vm_struct *vms = NULL;
+    int err = 0;
+    uint64_t prot_flag = 0;
+    if (addr == NULL)
+    {
+        ALERT("platform_mprotect: invalid address\n");
+        return -1;
+    }
 
     if (len == 0)
     {
-        ALERT("platform_alloc_exec: invalid length\n");
-        return addr;
+        ALERT("platform_mprotect: invalid length\n");
+        return -2;
     }
 
-    addr = __vmalloc(len, GFP_KERNEL, PAGE_KERNEL_EXEC);
+    vms = find_vm_area(addr);
 
-    if (addr == NULL)
-        ALERT("platform_alloc_exec: failed to vmalloc executable mem: %lld\n", len);
+    if (prot & PG_EXEC)
+    {
+        prot_flag |= PAGE_KERNEL_RX;
+    }
 
-    return addr;
+    if (prot & PG_WR)
+    {
+        prot_flag |= PAGE_KERNEL;
+    }
+
+    if (prot & PG_RD)
+    {
+        prot_flag |= PAGE_KERNEL_RO;
+    }
+
+    err = map_vm_area(vms, prot_flag, vms->pages);
+
+    return err;
 }
 
 void *
@@ -87,18 +108,6 @@ platform_free(void *addr, int64_t len)
     if (addr == NULL)
     {
         ALERT("platform_free: invalid address %p\n", addr);
-        return;
-    }
-
-    vfree(addr);
-}
-
-void
-platform_free_exec(void *addr, int64_t len)
-{
-    if (addr == NULL)
-    {
-        ALERT("platform_free_exec: invalid address %p\n", addr);
         return;
     }
 

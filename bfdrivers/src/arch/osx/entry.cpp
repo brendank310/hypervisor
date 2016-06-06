@@ -4,10 +4,9 @@
 #include <constants.h>
 #include <driver_entry_interface.h>
 #include "entry.h"
-
-//extern void xnu_thread_bind(unsigned int);
-//extern void xnu_thread_unbind(void);
-
+extern "C" {
+#include "intrinsics.h"
+}
 //////////
 OSDefineMetaClassAndStructors(org_bareflank_osx, IOUserClient)
 
@@ -45,7 +44,7 @@ bool org_bareflank_osx::start(IOService *provider)
     {
         IOLog("bareflank: no regserv :(\n");
     }
-
+    
     return success;
 }
 

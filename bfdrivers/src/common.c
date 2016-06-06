@@ -161,7 +161,7 @@ add_mdl_to_memory_manager(char *exec, uint64_t size, uint64_t type)
         num++;
 
     len = num * sizeof(struct memory_descriptor);
-    mdl = (struct memory_descriptor *)platform_alloc(len);
+    mdl = (struct memory_descriptor *)platform_malloc(len);
     if (mdl == 0)
     {
         ALERT("add_mdl_to_memory_manager: failed to allocate mdl\n");
@@ -250,6 +250,7 @@ load_elf_file(struct bfelf_file_t *ef, char *exec, uint64_t size)
 
         platform_memcpy(exec + phdr->p_vaddr, ef->file + phdr->p_offset,
                         phdr->p_filesz);
+        platform_mprotect(exec + phdr->p_vaddr, phdr->p_filesz, phdr->p_flags);
     }
 
     return BF_SUCCESS;
@@ -380,7 +381,7 @@ common_add_module(char *file, int64_t fsize)
         return BF_ERROR_FAILED_TO_ADD_FILE;
     }
 
-    module->exec = platform_alloc_exec(module->size);
+    module->exec = platform_malloc(module->size);
     if (module->exec == 0)
     {
         ALERT("add_module: out of memory\n");
