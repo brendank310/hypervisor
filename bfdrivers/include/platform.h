@@ -29,6 +29,10 @@
 extern "C" {
 #endif
 
+#define PG_EXEC 0x1
+#define PG_WR   0x2
+#define PG_RD   0x4
+
 /**
  * Allocate Memory
  *
@@ -37,17 +41,7 @@ extern "C" {
  * @param len the size of virtual memory to be allocated in bytes.
  * @return a virtual address pointing to the newly allocated memory
  */
-void *platform_alloc(int64_t len);
-
-/**
- * Allocate Executable Memory
- *
- * Used by the common code to allocate executable virtual memory.
- *
- * @param len the size of virtual memory to be allocated in bytes.
- * @return a virtual address pointing to the newly allocated memory
- */
-void *platform_alloc_exec(int64_t len);
+void *platform_malloc(int64_t len);
 
 /**
  * Convert Virtual Address to Physical Address
@@ -73,17 +67,6 @@ void *platform_virt_to_phys(void *virt);
 void platform_free(void *addr, int64_t len);
 
 /**
- * Free Executable Memory
- *
- * Used by the common code to free virtual memory that was allocated
- * using the platform_alloc_exec function.
- *
- * @param addr the virtual address returned from platform_alloc_exec
- * @param len the size of the memory allocated
- */
-void platform_free_exec(void *addr, int64_t len);
-
-/**
  * Memset
  *
  * @param ptr a pointer to the memory to set
@@ -100,6 +83,15 @@ void platform_memset(void *ptr, char value, int64_t num);
  * @param num the number of bytes to copy
  */
 void platform_memcpy(void *dst, const void *src, int64_t num);
+
+/**
+ * Mprotect
+ *
+ * @param addr Base address of virtual memory area to change permissions
+ * @param len  Length of the virtual memory area to change permissions for
+ * @param prot Permissions to set the range to
+ */
+int64_t platform_mprotect(void *addr, uint64_t len, uint8_t prot);
 
 /**
  * Start

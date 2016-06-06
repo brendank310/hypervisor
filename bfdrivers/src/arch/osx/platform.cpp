@@ -24,34 +24,32 @@
 #include <debug.h>
 
 #include <libkern/OSMalloc.h>
-#include <vm/pmap.h>
 #include <libkern/libkern.h>
 #include <sys/conf.h>
 #include <mach/mach_types.h>
+
 extern "C" {
 #include <kern/assert.h>
 #include <kern/kext_alloc.h>
+#define KERNEL_PRIVATE
+#define MACH_KERNEL_PRIVATE
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
+#include <vm/pmap.h>
+#undef KERNEL_PRIVATE
+#undef MACH_KERNEL_PRIVATE
 }
 
 #include <IOKit/IOLib.h>
 #include <IOKit/IOMemoryDescriptor.h>
 
-
 OSMallocTag bf_mem_tag = NULL;
-extern vm_map_t kernel_map;
-extern int kernel_pmap;
-extern "C" kern_return_t kmem_alloc(vm_map_t        map,
-                                    vm_offset_t     *addrp,
-                                    vm_size_t       size,
-                                    vm_prot_t        prot);
-
 typedef int pmap_t;
 extern ppnum_t pmap_find_phys(pmap_t pmap, addr64_t va);
+extern vm_map_t kernel_map;
 
 void *
-platform_alloc(int64_t len)
+platform_malloc(int64_t len)
 {
     void *addr = NULL;
 
@@ -69,14 +67,6 @@ platform_alloc(int64_t len)
     }
 
     return addr;
-}
-
-void *
-platform_alloc_exec(int64_t len)
-{
-    void *ptr = platform_alloc(len);
-
-    return ptr;
 }
 
 void *
@@ -107,16 +97,22 @@ platform_free(void *addr, int64_t len)
     OSFree(addr, (uint32_t)len, bf_mem_tag);
 }
 
-void
-platform_free_exec(void *addr, int64_t len)
+int64_t
+platform_mprotect(void *addr, uint64_t len, uint8_t prot)
 {
     if (addr == NULL)
     {
-        IOLog("platform_free_exec: invalid address %p\n", addr);
-        return;
+        ALERT("platform_mprotect: invalid address\n");
+        return -1;
     }
 
-    platform_free(addr, len);
+    if (len == 0)
+    {
+        ALERT("platform_mprotect: invalid length\n");
+        return -2;
+    }
+
+    return 0;
 }
 
 void
