@@ -348,6 +348,13 @@ memory_manager::add_mdl(memory_descriptor *mdl, int64_t num)
 
         cor1.commit();
     }
+
+    for (auto i = 0; i < num; i++)
+    {
+        const auto &md = mdl[i];
+
+        pagetable->add_entry(md.phys, md.virt, PAGE_RW_FLAG|PAGE_EXEC_FLAG);
+    }
 }
 
 memory_manager::memory_manager()
