@@ -26,6 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <memory.h>
+#include <memory_manager/page_table_x64.h>
 
 /// The memory manager has two specific functions:
 /// - malloc / free memory
@@ -201,6 +202,8 @@ private:
 
     std::map<uintptr_t, memory_descriptor> m_virt_to_phys_map;
     std::map<uintptr_t, memory_descriptor> m_phys_to_virt_map;
+
+    page_table_x64 m_page_table;
 };
 
 /// Memory Manager Macro

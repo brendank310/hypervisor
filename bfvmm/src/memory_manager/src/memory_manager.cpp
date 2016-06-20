@@ -27,6 +27,7 @@
 #include <constants.h>
 #include <commit_or_rollback.h>
 #include <memory_manager/memory_manager.h>
+#include <memory_manager/page_table_x64.h>
 #include <memory_manager/memory_manager_exceptions.h>
 
 // -----------------------------------------------------------------------------
@@ -353,7 +354,7 @@ memory_manager::add_mdl(memory_descriptor *mdl, int64_t num)
     {
         const auto &md = mdl[i];
 
-        pagetable->add_entry(md.phys, md.virt, PAGE_RW_FLAG|PAGE_EXEC_FLAG);
+        m_page_table.add_entry(md.phys, md.virt, PAGE_RW_FLAG|PAGE_EXEC_FLAG);
     }
 }
 

@@ -20,7 +20,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <memory_manager/memory_manager.h>
-#include <memory_manager/x64_paging/page_table_x64.h>
+#include <memory_manager/page_table_x64.h>
 
 page_table_x64::page_table_x64() : m_pml4(NULL)
 {
