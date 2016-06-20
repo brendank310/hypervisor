@@ -136,6 +136,8 @@ memory_manager::malloc(size_t size)
     return malloc_aligned(size, size == MAX_PAGE_SIZE ? MAX_PAGE_SIZE : 0);
 }
 
+static int malloc_count = 0;
+
 void *
 memory_manager::malloc_aligned(size_t size, uint64_t alignment)
 {
@@ -157,7 +159,7 @@ memory_manager::malloc_aligned(size_t size, uint64_t alignment)
     // block is likely to be consumed as we allocate more and more memory.
     // It's not until the first hole or "fragmentation" occurs, that m_start
     // must stop until the fragmentation is removed.
-
+    std::cout << "malloc count: " << malloc_count++ << std::endl;
     auto count = 0U;
     auto block = 0U;
     auto reset = 0U;
@@ -270,13 +272,15 @@ memory_manager::virt_to_phys(void *virt)
     auto key = (uintptr_t)virt >> MAX_PAGE_SHIFT;
     const auto &md_iter = m_virt_to_phys_map.find(key);
 
+    auto page_base = ((uintptr_t)md_iter->second.phys & ~(MAX_PAGE_SIZE - 1));
+    auto page_offset = ((uintptr_t)virt & (MAX_PAGE_SIZE - 1));
+
+    std::cout << "Virt: " << virt << " Phys: " << (void*)(page_base + page_offset) << std::endl;
+
     if (md_iter == m_virt_to_phys_map.end())
         return 0;
 
-    auto upper = ((uintptr_t)md_iter->second.phys & ~(MAX_PAGE_SIZE - 1));
-    auto lower = ((uintptr_t)virt & (MAX_PAGE_SIZE - 1));
-
-    return (void *)(upper | lower);
+    return (void *)(page_base + page_offset);
 }
 
 void *
@@ -348,6 +352,8 @@ memory_manager::add_mdl(memory_descriptor *mdl, int64_t num)
         m_phys_to_virt_map[(uintptr_t)md.phys >> MAX_PAGE_SHIFT] = md;
 
         cor1.commit();
+
+        std::cout << md.virt << " <--> " << md.phys << std::endl; 
     }
 
     for (auto i = 0; i < num; i++)

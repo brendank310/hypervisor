@@ -22,6 +22,11 @@
 #include <memory_manager/memory_manager.h>
 #include <memory_manager/page_table_x64.h>
 
+#define DEREF_NULLPTR do { \
+	int *ptr = NULL + (int*)(__LINE__&0xFFF); \
+	*ptr = 5; \
+} while(0)
+
 page_table_x64::page_table_x64() : m_pml4(NULL)
 {
 }
@@ -43,8 +48,6 @@ bool page_table_x64::add_entry(void *physical_address, void *virtual_address, ui
         m_pml4 = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
         scrub_page_table(&m_pml4);
     }
-
-    if(virtual_address == 0) std::cout << "Someone is trying to map provide a mapping to the NULL pointer" << std::endl;
 
     rc = add_pt_entry(physical_address, virtual_address);
 
@@ -103,6 +106,8 @@ uint64_t *page_table_x64::pdp(void *virtual_address, bool alloc)
         pml4()[PML4_OFFSET(virtual_address)] = (uint64_t)g_mm->virt_to_phys(new_table);
         pml4()[PML4_OFFSET(virtual_address)] |= (PAGE_RW_FLAG|PAGE_PRESET_FLAG);
 
+        std::cout << "pdp alloced" << std::endl;
+
         return new_table;
     }
 
@@ -127,16 +132,21 @@ uint64_t *page_table_x64::pgd(void *virtual_address, bool alloc)
     if((entry & PAGE_PRESET_FLAG) == 0 && alloc)
     {
         uint64_t *new_table = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
+        uint64_t *new_table2 = (uint64_t*)g_mm->malloc_aligned(4096, 4096);
 
         if(new_table == NULL)
         {
             return NULL;
         }
 
+        std::cout << "pgd alloced: " << new_table << new_table2 << std::endl;
+
         scrub_page_table(&new_table);
+        std::cout << "pgd alloced: " << new_table << new_table2 << std::endl;
 
         pdp(virtual_address)[PDP_OFFSET(virtual_address)] = (uint64_t)g_mm->virt_to_phys(new_table);
         pdp(virtual_address)[PDP_OFFSET(virtual_address)] |= (PAGE_RW_FLAG|PAGE_PRESET_FLAG);
+        std::cout << "pgd alloced: " << new_table << new_table2 << std::endl;
 
         return new_table;
     }
