@@ -54,7 +54,6 @@ private:
     void test_memory_manager_malloc_alloc_fragment();
     void test_memory_manager_add_mdl_invalid_mdl();
     void test_memory_manager_add_mdl_invalid_num();
-    void test_memory_manager_add_mdl_invalid_size();
     void test_memory_manager_add_mdl_unaligned_physical();
     void test_memory_manager_add_mdl_unaligned_virtual();
     void test_memory_manager_virt_to_phys_unknown();
@@ -65,6 +64,8 @@ private:
     void test_memory_manager_phys_to_virt_random_address();
     void test_memory_manager_phys_to_virt_upper_limit();
     void test_memory_manager_phys_to_virt_lower_limit();
+
+    void test_page_table_x64_add_page_success();
 };
 
 #endif
