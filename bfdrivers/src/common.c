@@ -21,13 +21,13 @@
  */
 
 #include <debug.h>
+#include <driver_entry_interface.h>
 #include <common.h>
 #include <platform.h>
 
 #include <entry.h>
 #include <memory.h>
 #include <constants.h>
-#include <driver_entry_interface.h>
 
 /* -------------------------------------------------------------------------- */
 /* Global                                                                     */

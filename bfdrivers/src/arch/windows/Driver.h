@@ -15,7 +15,7 @@ Environment:
 --*/
 
 #define INITGUID
-
+#pragma warning(disable:4242) // conversions are okay (or not)!
 #include <ntddk.h>
 #include <wdf.h>
 #include <driver_entry_interface.h>

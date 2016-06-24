@@ -35,17 +35,23 @@
 #endif
 
 #ifdef KERNEL
-#if defined(__linux__)
-#include <linux/module.h>
-#define ALERT(...) printk("[ELF ALERT]: " __VA_ARGS__)
+    #if defined(__linux__)
+        #include <linux/module.h>
+        #define ALERT(...) printk("[ELF ALERT]: " __VA_ARGS__)
+    #elif defined(__darwin__)
+        #define ALERT(...) IOLog("[ELF ALERT]: " __VA_ARGS__)
+    #elif defined(_WIN32)
+        #include <ntddk.h>
+        #pragma warning(disable:4242) // conversions are okay (or not)!
+        #pragma warning(disable:4244) // conversions are okay (or not)!
+        #pragma warning(disable:4706) // conversions are okay (or not)!
+        #define ALERT(...) DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,"[bfelfloader ERROR]: " __VA_ARGS__)
+    #endif
 #else
-#define ALERT(...) IOLog("[ELF ALERT]: " __VA_ARGS__)
-#endif
-#else
-#ifdef __linux__
-#include <stdio.h>
-#define ALERT(...) printf("[ELF ALERT]: " __VA_ARGS__)
-#endif
+    #ifdef __linux__
+        #include <stdio.h>
+        #define ALERT(...) printf("[ELF ALERT]: " __VA_ARGS__)
+    #endif
 #endif
 
 /* -------------------------------------------------------------------------- */

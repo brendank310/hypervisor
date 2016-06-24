@@ -168,13 +168,15 @@ extern "C" {
 /* Windows Interfaces                                                         */
 /* ========================================================================== */
 
-#ifdef _WIN32    
+#ifdef _WIN32
 
 #ifndef KERNEL
 #include <windows.h>
 #include <initguid.h>
 #include <ntddstor.h>
 #else
+#pragma warning(disable:4242) // conversions are okay (or not)!
+#pragma warning(disable:4244) // conversions are okay (or not)!
 #include <ntddk.h>
 #endif
 

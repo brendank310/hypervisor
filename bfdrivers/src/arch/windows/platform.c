@@ -39,7 +39,7 @@ platform_alloc(int64_t len)
     }
 
 	addr = ExAllocatePoolWithTag(NonPagedPool, len, BF_TAG);
-	
+
 	if(addr) RtlZeroMemory(addr, len);
 
     return addr;
@@ -83,8 +83,9 @@ platform_virt_to_phys(void *virt)
 }
 
 void
-platform_free(void *addr)
+platform_free(void *addr, int64_t size)
 {
+		(void)size;
     if (addr == NULL)
     {
         ALERT("platform_free: invalid address %p\n", addr);
@@ -130,7 +131,7 @@ platform_start()
 
 }
 
-void 
+void
 platform_stop()
 {
 
