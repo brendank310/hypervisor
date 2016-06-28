@@ -4,9 +4,7 @@
 #include <constants.h>
 #include <driver_entry_interface.h>
 #include "entry.h"
-extern "C" {
-#include "intrinsics.h"
-}
+
 //////////
 OSDefineMetaClassAndStructors(org_bareflank_osx, IOUserClient)
 
@@ -115,7 +113,7 @@ ioctl_add_module(char *file)
         return BF_IOCTL_FAILURE;
     }
 
-    buf = (char *)platform_alloc(g_module_length);
+    buf = (char *)platform_malloc(g_module_length);
     if (buf == NULL)
     {
         ALERT("IOCTL_ADD_MODULE: failed to allocate memory for the module\n");

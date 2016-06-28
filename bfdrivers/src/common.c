@@ -274,7 +274,7 @@ common_reset(void)
 
     for (i = 0; i < g_num_modules; i++)
     {
-        platform_free_exec(g_modules[i].exec, g_modules[i].size);
+        platform_free(g_modules[i].exec, g_modules[i].size);
 
         g_modules[i].exec = 0;
         g_modules[i].size = 0;
@@ -411,7 +411,7 @@ common_add_module(char *file, int64_t fsize)
 
 failure:
 
-    platform_free_exec(module->exec, module->size);
+    platform_free(module->exec, module->size);
     return ret;
 }
 

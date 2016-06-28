@@ -90,7 +90,7 @@ vmcs_intel_x64::launch(const std::shared_ptr<vmcs_intel_x64_state> &host_state,
 
         host_state->dump();
         guest_state->dump();
-
+        
         this->check_vmcs_control_state();
         this->check_vmcs_guest_state();
         this->check_vmcs_host_state();

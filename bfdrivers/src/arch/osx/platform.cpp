@@ -31,22 +31,16 @@
 extern "C" {
 #include <kern/assert.h>
 #include <kern/kext_alloc.h>
-#define KERNEL_PRIVATE
-#define MACH_KERNEL_PRIVATE
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
-#include <vm/pmap.h>
-#undef KERNEL_PRIVATE
-#undef MACH_KERNEL_PRIVATE
+#include <mach/vm_map.h>
 }
 
 #include <IOKit/IOLib.h>
 #include <IOKit/IOMemoryDescriptor.h>
 
 OSMallocTag bf_mem_tag = NULL;
-typedef int pmap_t;
-extern ppnum_t pmap_find_phys(pmap_t pmap, addr64_t va);
+typedef kern_return_t (*mach_vm_protect_fn)(vm_task_entry_t target, mach_vm_address_t addr, mach_vm_size_t size, boolean_t set_max, vm_prot_t new_prot);
 extern vm_map_t kernel_map;
+mach_vm_protect_fn local_vm_protect = (mach_vm_protect_fn)0xffffff80003963c0;
 
 void *
 platform_malloc(int64_t len)
@@ -63,7 +57,7 @@ platform_malloc(int64_t len)
 
     if (addr == NULL)
     {
-        IOLog("platform_alloc: failed to vmalloc mem: %lld\n", len);
+        IOLog("platform_alloc: failed to OSMalloc mem: %lld\n", len);
     }
 
     return addr;
@@ -111,7 +105,9 @@ platform_mprotect(void *addr, uint64_t len, uint8_t prot)
         ALERT("platform_mprotect: invalid length\n");
         return -2;
     }
-
+    
+    local_vm_protect(kernel_map, (mach_vm_address_t)addr, (mach_vm_size_t)len, FALSE, prot);
+    
     return 0;
 }
 
@@ -133,10 +129,21 @@ platform_memcpy(void *dst, const void *src, int64_t num)
     memcpy(dst, src, num);
 }
 
+static void *get_kernel_base_address(void)
+{
+    return NULL;
+}
+
 void
 platform_start()
 {
-
+    // Allocate our OSMalloc tag
+    bf_mem_tag = OSMalloc_Tagalloc("bareflank_alloc", OSMT_DEFAULT);
+    
+    // Hacks to get some functions to set memory permissions in
+    // platform_mprotect
+    //    void *kernel_base_addr = get_kernel_base_address();
+    
 }
 
 void

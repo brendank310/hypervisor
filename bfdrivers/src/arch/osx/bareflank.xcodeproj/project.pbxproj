@@ -32,6 +32,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		8023197E1D0CB0D800997F90 /* Kernel.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Kernel.framework; path = System/Library/Frameworks/Kernel.framework; sourceTree = SDKROOT; };
 		80DE5F7D1C87F81D00E91DFB /* common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = common.c; path = ../../../common.c; sourceTree = "<group>"; };
 		80EA76431C87485D007D5F52 /* bareflank.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = bareflank.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		80EA764A1C87485D007D5F52 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -73,6 +74,7 @@
 		80EA76391C87485D007D5F52 = {
 			isa = PBXGroup;
 			children = (
+				8023197E1D0CB0D800997F90 /* Kernel.framework */,
 				80EA76781C874D08007D5F52 /* bfelf_loader.h */,
 				80EA76761C874CE6007D5F52 /* bfelf_loader.c */,
 				80EA766E1C874C48007D5F52 /* common.h */,
